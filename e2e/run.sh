@@ -20,7 +20,17 @@ case "${1:-}" in
       openssl x509 -in e2e/certs/tls.crt -pubkey -noout | openssl pkey -pubin -outform der \
         | openssl dgst -sha256 -binary | base64 > e2e/certs/spki.txt
     fi
-    "${compose[@]}" up -d --build --wait --wait-timeout 300 "${@:2}"
+    if [ $# -gt 1 ]; then
+      "${compose[@]}" up -d --build --wait --wait-timeout 300 "${@:2}"
+    else
+      # `--wait` treats any exited container as a failure, even a one-shot that succeeded. Wait for the long-running
+      # services, then check the client sync's exit code on its own.
+      "${compose[@]}" up -d --build
+      "${compose[@]}" up -d --wait --wait-timeout 300 sso-ui traefik oathkeeper mailpit whoami
+      "${compose[@]}" wait hydra-clients >/dev/null
+      status=$(docker inspect -f '{{.State.ExitCode}}' "$("${compose[@]}" ps -aq hydra-clients)")
+      [ "$status" = "0" ] || { echo "hydra-clients exited with $status" >&2; exit 1; }
+    fi
     ;;
   test)
     (cd e2e && npx playwright test "${@:2}")
