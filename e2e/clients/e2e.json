@@ -1,0 +1,14 @@
+{
+  "client_id": "e2e",
+  "client_name": "E2E test app",
+  "client_secret": "e2e-secret",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "scope": "openid profile email groups offline_access",
+  "audience": ["stalwart"],
+  "redirect_uris": ["https://app.bulbashenko.test/callback"],
+  "access_token_strategy": "jwt",
+  "skip_consent": true,
+  "metadata": { "required_group": "mail-users", "access_token_identity": true }
+}

@@ -1,0 +1,5 @@
+rules.test.yml
+node_modules/
+test-results/
+playwright-report/
+certs/

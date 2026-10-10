@@ -1,0 +1,20 @@
+# Forward-auth rules for the mesh-only admin UIs. Add a host: copy a rule, change id, url and the group.
+# The group is a Keto object in the Group namespace; the subject is the Kratos identity id.
+
+- id: mesh-admin-uis
+  match:
+    url: "https://<{mail,users,garage,kuma}>.int.bulbashenko.com/<**>"
+    methods: [GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: remote_json
+    config:
+      payload: |
+        {"namespace":"Group","object":"infra-admins","relation":"members","subject_set":{"namespace":"User","object":"{{ print .Subject }}","relation":""}}
+  mutators:
+    - handler: header
+  # Browsers without a session are redirected to sign in (see the handler's `when`); everything else falls back to
+  # a plain JSON error (errors.fallback).
+  errors:
+    - handler: redirect

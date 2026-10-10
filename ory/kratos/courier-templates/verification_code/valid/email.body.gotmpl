@@ -1,0 +1,22 @@
+<!doctype html>
+<html><body style="margin:0;padding:0;background:#030603">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#030603">
+  <tr><td align="center" style="padding:32px 16px">
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;border:1px solid #243624;background:#060b06;font-family:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;color:#78b864">
+      <tr><td style="padding:20px 28px;border-bottom:1px solid #243624;font-size:18px;color:#b8f0a4">&gt;_ BULBASHENKO.COM <span style="font-size:11px;color:#78b864">/ IDENTITY</span></td></tr>
+      <tr><td style="padding:28px 28px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="font-size:24px;color:#b8f0a4;padding-bottom:12px">Подтверждение почты</td></tr>
+          <tr><td style="font-size:14px;line-height:1.7;padding-bottom:16px">Введите этот код или откройте ссылку. Код действует {{ .ExpiresInMinutes }} минут.</td></tr>
+      <tr><td style="padding:8px 0 24px">
+        <div style="display:inline-block;padding:14px 22px;background:#101a10;border:1px solid #78b864;font-size:28px;letter-spacing:6px;color:#b8f0a4">{{ .VerificationCode }}</div>
+      </td></tr>
+      <tr><td style="padding:0 0 24px;font-size:13px"><a href="{{ .VerificationURL }}" style="color:#a3e889">{{ .VerificationURL }}</a></td></tr>
+          <tr><td style="font-size:12px;line-height:1.7;color:#5b8c4c;padding-bottom:28px;border-top:1px solid #182b16;padding-top:16px">Confirm your email. Enter this code or open the link. It expires in {{ .ExpiresInMinutes }} minutes.</td></tr>
+        </table>
+      </td></tr>
+      <tr><td style="padding:14px 28px;border-top:1px solid #243624;font-size:11px;color:#5b8c4c">[ SECURE BY DESIGN ] · auth.bulbashenko.com</td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>

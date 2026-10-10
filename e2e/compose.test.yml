@@ -1,0 +1,113 @@
+# Test stack: compose.yml plus a local Postgres, mailpit and a Traefik that mimics production (TLS, mesh admin hosts
+# with Oathkeeper forward-auth). Domain bulbashenko.test; browsers and curl map it to 127.0.0.1.
+#
+#   e2e/run.sh up      # build and start
+#   e2e/run.sh test    # Playwright
+#   e2e/run.sh down
+
+name: auth-test
+
+services:
+  postgres:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_PASSWORD: test
+    volumes:
+      - ./e2e/postgres:/docker-entrypoint-initdb.d:ro
+    networks: [coolify]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  dbproxy:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  kratos-migrate:
+    volumes:
+      - ./e2e/ory:/etc/config/kratos-test:ro
+    command: ["migrate", "sql", "-e", "--yes", "-c", "/etc/config/kratos/kratos.yml", "-c", "/etc/config/kratos-test/kratos.test.yml"]
+
+  # Test only: the admin APIs on loopback, so Playwright can prepare people and groups.
+  kratos:
+    ports:
+      - "127.0.0.1:4434:4434"
+    volumes:
+      - ./e2e/ory:/etc/config/kratos-test:ro
+    command: ["serve", "-c", "/etc/config/kratos/kratos.yml", "-c", "/etc/config/kratos-test/kratos.test.yml", "--watch-courier"]
+
+  hydra-migrate:
+    volumes:
+      - ./e2e/ory:/etc/config/hydra-test:ro
+    command: ["migrate", "sql", "up", "-e", "--yes", "-c", "/etc/config/hydra/hydra.yml", "-c", "/etc/config/hydra-test/hydra.test.yml"]
+
+  hydra:
+    ports:
+      - "127.0.0.1:4445:4445"
+    volumes:
+      - ./e2e/ory:/etc/config/hydra-test:ro
+    command: ["serve", "all", "-c", "/etc/config/hydra/hydra.yml", "-c", "/etc/config/hydra-test/hydra.test.yml"]
+
+  keto:
+    ports:
+      - "127.0.0.1:4466:4466"
+      - "127.0.0.1:4467:4467"
+
+  oathkeeper:
+    volumes:
+      - ./e2e/ory:/etc/config/oathkeeper-test:ro
+    command: ["serve", "-c", "/etc/config/oathkeeper/oathkeeper.yml", "-c", "/etc/config/oathkeeper-test/oathkeeper.test.yml"]
+
+  sso-ui:
+    environment:
+      PUBLIC_URL: https://auth.bulbashenko.test
+      ADMIN_HOST: users.int.bulbashenko.test
+    # In production Coolify generates this router from the domain assigned to `sso-ui`.
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.sso-ui.loadbalancer.server.port=3000
+      - traefik.http.routers.sso-ui.rule=Host(`auth.bulbashenko.test`)
+      - traefik.http.routers.sso-ui.entrypoints=https
+      - traefik.http.routers.sso-ui.tls=true
+
+  # Production clients plus the test apps.
+  hydra-clients:
+    volumes:
+      - ./e2e/clients:/app/e2e-clients:ro
+    command: ["node", "scripts/sync-clients.mjs", "/app/clients", "/app/e2e-clients"]
+
+  # Stand-in for a mesh admin UI behind forward-auth (garage.int).
+  whoami:
+    image: traefik/whoami:v1.12.0
+
+  # Same providers as Coolify's proxy: docker labels plus hand-made files (here the *.int hosts).
+  traefik:
+    image: traefik:v3.7.14
+    command:
+      - --entrypoints.https.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --log.level=WARN
+    ports:
+      - "127.0.0.1:443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./e2e/traefik:/etc/traefik/dynamic:ro
+      - ./e2e/certs:/certs:ro
+    depends_on:
+      - sso-ui
+      - oathkeeper
+
+networks:
+  coolify:
+    name: auth-test-coolify
+    external: false

@@ -1,0 +1,12 @@
+{
+  "client_id": "e2e-admins",
+  "client_name": "E2E admins-only app",
+  "client_secret": "e2e-secret",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "grant_types": ["authorization_code"],
+  "response_types": ["code"],
+  "scope": "openid profile",
+  "redirect_uris": ["https://app.bulbashenko.test/callback"],
+  "skip_consent": true,
+  "metadata": { "required_group": "site-admins" }
+}

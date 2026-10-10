@@ -1,0 +1,46 @@
+# Test overrides of ory/kratos/kratos.yml: the bulbashenko.test domain and mailpit.
+serve:
+  public:
+    base_url: https://auth.bulbashenko.test/
+cookies:
+  domain: bulbashenko.test
+selfservice:
+  default_browser_return_url: https://auth.bulbashenko.test/
+  allowed_return_urls:
+    - https://auth.bulbashenko.test
+    - https://users.int.bulbashenko.test
+    - https://*.int.bulbashenko.test
+    - https://app.bulbashenko.test
+  methods:
+    passkey:
+      config:
+        rp:
+          display_name: bulbashenko.test
+          id: auth.bulbashenko.test
+          origins:
+            - https://auth.bulbashenko.test
+    password:
+      config:
+        # No network calls from CI.
+        haveibeenpwned_enabled: false
+    totp:
+      config:
+        issuer: bulbashenko.test
+  flows:
+    error:
+      ui_url: https://auth.bulbashenko.test/error
+    login:
+      ui_url: https://auth.bulbashenko.test/login
+    registration:
+      ui_url: https://auth.bulbashenko.test/login
+    settings:
+      ui_url: https://auth.bulbashenko.test/settings
+    recovery:
+      ui_url: https://auth.bulbashenko.test/recovery
+      after:
+        default_browser_return_url: https://auth.bulbashenko.test/settings
+    verification:
+      ui_url: https://auth.bulbashenko.test/verification
+    logout:
+      after:
+        default_browser_return_url: https://auth.bulbashenko.test/login

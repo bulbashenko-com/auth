@@ -1,0 +1,15 @@
+# Test overrides of ory/hydra/hydra.yml.
+serve:
+  public:
+    cors:
+      allowed_origins:
+        - https://mail.int.bulbashenko.test
+urls:
+  self:
+    issuer: https://auth.bulbashenko.test
+    public: https://auth.bulbashenko.test
+  login: https://auth.bulbashenko.test/login
+  consent: https://auth.bulbashenko.test/consent
+  logout: https://auth.bulbashenko.test/logout
+  error: https://auth.bulbashenko.test/error
+  post_logout_redirect: https://auth.bulbashenko.test/login

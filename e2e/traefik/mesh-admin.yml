@@ -1,0 +1,35 @@
+# Test copy of the production mesh-admin routers (without the mesh-only IP allow list): users.int is the admin page,
+# garage.int stands for any admin UI. Both sit behind Oathkeeper forward-auth.
+http:
+  middlewares:
+    sso-forward-auth:
+      forwardAuth:
+        address: http://oathkeeper:4456/decisions
+        trustForwardHeader: true
+        authResponseHeaders: [Remote-User, Remote-Email, Remote-Name]
+  routers:
+    users-int:
+      rule: Host(`users.int.bulbashenko.test`)
+      entryPoints: [https]
+      tls: {}
+      middlewares: [sso-forward-auth]
+      service: users-int
+    garage-int:
+      rule: Host(`garage.int.bulbashenko.test`)
+      entryPoints: [https]
+      tls: {}
+      middlewares: [sso-forward-auth]
+      service: garage-int
+    # The OIDC test apps' redirect target.
+    app:
+      rule: Host(`app.bulbashenko.test`)
+      entryPoints: [https]
+      tls: {}
+      service: garage-int
+  services:
+    users-int:
+      loadBalancer:
+        servers: [{ url: "http://sso-ui:3000" }]
+    garage-int:
+      loadBalancer:
+        servers: [{ url: "http://whoami:80" }]

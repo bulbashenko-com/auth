@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ory/hydra/v26.2.0/.schema/config.schema.json
+#
+# Ory Hydra: the OpenID Connect provider apps sign in with. It knows no people: Kratos (login) and the UI's consent
+# route tell it who signed in and what goes into the tokens. Secrets and DSN come from the environment.
+
+version: v26.2.0
+
+serve:
+  public:
+    cors:
+      enabled: true
+      # The Stalwart WebUI calls the token endpoint from the browser.
+      allowed_origins:
+        - https://mail.int.bulbashenko.com
+      allowed_methods: [GET, POST]
+      allowed_headers: [Authorization, Content-Type]
+      allow_credentials: false
+  cookies:
+    same_site_mode: Lax
+
+urls:
+  self:
+    issuer: https://auth.bulbashenko.com
+    public: https://auth.bulbashenko.com
+  login: https://auth.bulbashenko.com/login
+  consent: https://auth.bulbashenko.com/consent
+  logout: https://auth.bulbashenko.com/logout
+  error: https://auth.bulbashenko.com/error
+  post_logout_redirect: https://auth.bulbashenko.com/login
+  identity_provider:
+    # Kratos public API, for Hydra's logout to end the Kratos session too.
+    publicUrl: http://kratos:4433
+    url: http://kratos:4434
+
+strategies:
+  # Stalwart validates access tokens offline against the JWKS.
+  access_token: jwt
+  # `scp` (list) for Ory-style consumers and `scope` (string) for Stalwart.
+  jwt:
+    scope_claim: both
+
+oauth2:
+  pkce:
+    enforced: true
+    enforced_for_public_clients: true
+  # The consent route puts these at the top level of access tokens instead of under `ext`.
+  allowed_top_level_claims:
+    - groups
+    - preferred_username
+    - email
+    - name
+  mirror_top_level_claims: false
+  expose_internal_errors: false
+
+ttl:
+  access_token: 1h
+  id_token: 1h
+  refresh_token: 720h
+  auth_code: 10m
+  login_consent_request: 30m
+
+oidc:
+  subject_identifiers:
+    supported_types: [public]
+
+log:
+  level: info
+  format: json
+  leak_sensitive_values: false

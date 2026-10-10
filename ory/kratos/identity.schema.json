@@ -1,0 +1,46 @@
+{
+  "$id": "https://auth.bulbashenko.com/schemas/person.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "traits": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "Username",
+          "description": "Login name and mailbox local part (preferred_username).",
+          "pattern": "^[a-z][a-z0-9._-]{1,31}$",
+          "ory.sh/kratos": {
+            "credentials": {
+              "password": { "identifier": true },
+              "passkey": { "display_name": true },
+              "totp": { "account_name": true }
+            }
+          }
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "title": "Email",
+          "maxLength": 320,
+          "ory.sh/kratos": {
+            "credentials": {
+              "password": { "identifier": true }
+            },
+            "recovery": { "via": "email" },
+            "verification": { "via": "email" }
+          }
+        },
+        "name": {
+          "type": "string",
+          "title": "Name",
+          "maxLength": 100
+        }
+      },
+      "required": ["username", "email"],
+      "additionalProperties": false
+    }
+  }
+}

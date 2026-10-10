@@ -1,0 +1,9 @@
+# Test overrides of ory/oathkeeper/oathkeeper.yml.
+access_rules:
+  repositories:
+    - file:///etc/config/oathkeeper-test/rules.test.yml
+errors:
+  handlers:
+    redirect:
+      config:
+        to: https://auth.bulbashenko.test/login
