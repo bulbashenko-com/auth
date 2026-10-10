@@ -27,8 +27,8 @@ case "${1:-}" in
       # services, then check the client sync's exit code on its own.
       "${compose[@]}" up -d --build
       "${compose[@]}" up -d --wait --wait-timeout 300 sso-ui traefik oathkeeper mailpit whoami
-      "${compose[@]}" wait hydra-clients >/dev/null
-      status=$(docker inspect -f '{{.State.ExitCode}}' "$("${compose[@]}" ps -aq hydra-clients)")
+      # `docker wait` also answers for a container that has already exited (`compose wait` does not).
+      status=$(docker wait "$("${compose[@]}" ps -aq hydra-clients)")
       [ "$status" = "0" ] || { echo "hydra-clients exited with $status" >&2; exit 1; }
     fi
     ;;
