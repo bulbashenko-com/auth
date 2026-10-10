@@ -1,2 +1,4 @@
 thunderbird-addon/dist/
 .env
+.compose.e2e.yml
+node_modules/

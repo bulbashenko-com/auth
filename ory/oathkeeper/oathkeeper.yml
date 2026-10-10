@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ory/oathkeeper/v26.2.0/.schema/config.schema.json
+#
+# Ory Oathkeeper as Traefik's forward-auth: GET /decisions with the X-Forwarded-* headers of the original request.
+# Every rule needs a valid two-factor Kratos session (whoami enforces the AAL) and membership in a Keto group.
+# No database. The decision port (4456) is reached only from the coolify network; the proxy port is unused.
+
+version: v26.2.0
+
+serve:
+  api:
+    port: 4456
+  proxy:
+    port: 4455
+
+access_rules:
+  matching_strategy: glob
+  repositories:
+    - file:///etc/config/oathkeeper/rules.yml
+
+authenticators:
+  cookie_session:
+    enabled: true
+    config:
+      check_session_url: http://kratos:4433/sessions/whoami
+      preserve_path: true
+      only:
+        - ory_session
+      subject_from: identity.id
+      extra_from: "@this"
+
+authorizers:
+  deny:
+    enabled: true
+  remote_json:
+    enabled: true
+    config:
+      # Keto answers 200 (allowed) or 403 (denied). The group comes from each rule's config.
+      remote: http://keto:4466/relation-tuples/check
+      payload: "{}"
+
+mutators:
+  header:
+    enabled: true
+    config:
+      headers:
+        Remote-User: "{{ print .Extra.identity.traits.username }}"
+        Remote-Email: "{{ print .Extra.identity.traits.email }}"
+        Remote-Name: "{{ print .Extra.identity.traits.name }}"
+
+errors:
+  fallback:
+    - json
+  handlers:
+    json:
+      enabled: true
+      config:
+        verbose: false
+    redirect:
+      enabled: true
+      config:
+        to: https://auth.bulbashenko.com/login
+        return_to_query_param: return_to
+        when:
+          # Browsers without a session go to the login page; everything else gets a plain error.
+          - error:
+              - unauthorized
+            request:
+              header:
+                accept:
+                  - text/html
+
+log:
+  level: info
+  format: json

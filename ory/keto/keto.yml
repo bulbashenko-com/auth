@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ory/keto/v26.2.0/.schema/config.schema.json
+#
+# Ory Keto: group membership, the only place it is stored. `Group:<name>#members@<identity id>`.
+# Read API (4466): the UI's consent route and Oathkeeper. Write API (4467): the admin page and scripts only.
+# Neither is routed publicly. DSN comes from the environment.
+
+version: v26.2.0
+
+serve:
+  read:
+    host: 0.0.0.0
+    port: 4466
+  write:
+    host: 0.0.0.0
+    port: 4467
+  opl:
+    host: 0.0.0.0
+    port: 4469
+  metrics:
+    host: 0.0.0.0
+    port: 4468
+
+namespaces:
+  location: file:///etc/config/keto/namespaces.keto.ts
+
+log:
+  level: info
+  format: json

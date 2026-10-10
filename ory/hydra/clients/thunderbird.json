@@ -1,0 +1,17 @@
+{
+  "client_id": "thunderbird",
+  "client_name": "Thunderbird",
+  "token_endpoint_auth_method": "none",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "scope": "openid email profile offline_access",
+  "audience": ["stalwart"],
+  "redirect_uris": ["http://127.0.0.1", "http://127.0.0.1/"],
+  "access_token_strategy": "jwt",
+  "authorization_code_grant_access_token_lifespan": "1h0m0s",
+  "authorization_code_grant_refresh_token_lifespan": "720h0m0s",
+  "refresh_token_grant_access_token_lifespan": "1h0m0s",
+  "refresh_token_grant_refresh_token_lifespan": "720h0m0s",
+  "skip_consent": true,
+  "metadata": { "required_group": "mail-users", "access_token_identity": true }
+}

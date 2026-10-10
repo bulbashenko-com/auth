@@ -1,0 +1,17 @@
+{
+  "client_id": "stalwart-webui",
+  "client_name": "Mail settings",
+  "token_endpoint_auth_method": "none",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "scope": "openid email profile offline_access",
+  "audience": ["stalwart"],
+  "redirect_uris": [
+    "https://mail.int.bulbashenko.com/admin/oauth/callback",
+    "https://mail.int.bulbashenko.com/account/oauth/callback"
+  ],
+  "allowed_cors_origins": ["https://mail.int.bulbashenko.com"],
+  "access_token_strategy": "jwt",
+  "skip_consent": true,
+  "metadata": { "required_group": "mail-users", "access_token_identity": true }
+}

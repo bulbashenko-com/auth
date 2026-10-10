@@ -1,0 +1,141 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ory/kratos/v26.2.0/.schemastore/config.schema.json
+#
+# Ory Kratos: people, their credentials (passkey, password, TOTP, recovery codes), sessions and the self-service flows.
+# Values for bulbashenko.com; e2e/ory/kratos.test.yml overrides the domains for tests.
+# Secrets and the database come from the environment (DSN, SECRETS_*, COURIER_SMTP_CONNECTION_URI), see compose.yml.
+
+version: v26.2.0
+
+serve:
+  public:
+    base_url: https://auth.bulbashenko.com/
+    cors:
+      enabled: false
+  admin:
+    # Never routed: only the UI's server side, Oathkeeper's whoami check and the admin scripts reach it.
+    base_url: http://kratos:4434/
+
+# The session cookie must reach Oathkeeper on *.int.bulbashenko.com.
+cookies:
+  domain: bulbashenko.com
+  same_site: Lax
+
+session:
+  lifespan: 168h
+  earliest_possible_extend: 24h
+  cookie:
+    name: ory_session
+    persistent: true
+  whoami:
+    # Anyone with a second factor must have used it. Every account gets TOTP, so every session is two-factor.
+    required_aal: highest_available
+
+selfservice:
+  default_browser_return_url: https://auth.bulbashenko.com/
+  allowed_return_urls:
+    - https://auth.bulbashenko.com
+    - https://users.int.bulbashenko.com
+    - https://*.int.bulbashenko.com
+    - https://bulbashenko.com
+
+  methods:
+    passkey:
+      enabled: true
+      config:
+        rp:
+          display_name: bulbashenko.com
+          id: auth.bulbashenko.com
+          origins:
+            - https://auth.bulbashenko.com
+    password:
+      enabled: true
+      config:
+        haveibeenpwned_enabled: true
+        min_password_length: 12
+        identifier_similarity_check_enabled: true
+    totp:
+      enabled: true
+      config:
+        issuer: bulbashenko.com
+    lookup_secret:
+      enabled: true
+    # Recovery and verification codes by email. Not a login method.
+    code:
+      enabled: true
+      passwordless_enabled: false
+      mfa_enabled: false
+      config:
+        lifespan: 15m
+    # Off on purpose: traits (username, email) feed tokens and Stalwart's mailbox mapping, so only admins change them.
+    profile:
+      enabled: false
+    link:
+      enabled: false
+    webauthn:
+      enabled: false
+    oidc:
+      enabled: false
+
+  flows:
+    error:
+      ui_url: https://auth.bulbashenko.com/error
+    login:
+      ui_url: https://auth.bulbashenko.com/login
+      lifespan: 15m
+    registration:
+      # Accounts are created by admins only.
+      enabled: false
+      ui_url: https://auth.bulbashenko.com/login
+    settings:
+      ui_url: https://auth.bulbashenko.com/settings
+      privileged_session_max_age: 15m
+      required_aal: highest_available
+    recovery:
+      enabled: true
+      use: code
+      ui_url: https://auth.bulbashenko.com/recovery
+      after:
+        # Straight to settings, where the new password, passkey and TOTP are set.
+        default_browser_return_url: https://auth.bulbashenko.com/settings
+    verification:
+      enabled: true
+      use: code
+      ui_url: https://auth.bulbashenko.com/verification
+    logout:
+      after:
+        default_browser_return_url: https://auth.bulbashenko.com/login
+
+# Kratos accepts Hydra's login challenge itself when a login flow carries one.
+oauth2_provider:
+  url: http://hydra:4445
+  override_return_to: true
+
+identity:
+  default_schema_id: person
+  schemas:
+    - id: person
+      url: file:///etc/config/kratos/identity.schema.json
+
+courier:
+  template_override_path: /etc/config/kratos/courier-templates
+  smtp:
+    from_name: bulbashenko.com
+
+# Credential data (TOTP secrets and the like) is encrypted at rest with SECRETS_CIPHER.
+ciphers:
+  algorithm: xchacha20-poly1305
+
+hashers:
+  algorithm: argon2
+  argon2:
+    # Small box, two people: keep memory per hash modest.
+    memory: 64MB
+    iterations: 3
+    parallelism: 1
+    salt_length: 16
+    key_length: 32
+
+log:
+  level: info
+  format: json
+  leak_sensitive_values: false

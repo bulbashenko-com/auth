@@ -1,0 +1,15 @@
+{
+  "client_id": "bulbashenko-site",
+  "client_name": "bulbashenko.com admin",
+  "client_secret": "${OIDC_SITE_CLIENT_SECRET}",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "grant_types": ["authorization_code"],
+  "response_types": ["code"],
+  "scope": "openid profile email groups",
+  "redirect_uris": [
+    "https://bulbashenko.com/api/auth/oidc/callback",
+    "http://localhost:3000/api/auth/oidc/callback"
+  ],
+  "skip_consent": true,
+  "metadata": { "required_group": "site-admins" }
+}

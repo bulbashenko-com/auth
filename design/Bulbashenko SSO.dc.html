@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=Tiny5&amp;display=swap" rel="stylesheet">
+<script src="./eye-ascii.js"></script>
+<script src="./ascii-bg.js"></script>
+<style>
+html,body{margin:0;background:rgb(18,22,18);}
+a{color:rgb(184,240,164);text-decoration:none;}
+a:hover{color:rgb(214,250,196);}
+input::placeholder{color:rgb(64,98,56);}
+@keyframes blink{50%{opacity:0}}
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:28px;padding:64px 64px 0;font-family:'IBM Plex Mono',ui-monospace,monospace;">
+<div style="display:flex;flex-direction:column;gap:8px;color:rgb(120,184,100);">
+<span style="font-family:'Tiny5',monospace;font-size:28px;color:rgb(184,240,164);">02 / ГЛАЗ: МОНО ИЛИ ЦВЕТ</span>
+<span style="font-size:13px;">Правая половина 720×848, только глаз. Выбранный вариант включается в <a href="#1b">1b</a> через Tweaks → eyeColor.</span>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start;">
+<div id="2a" style="display:flex;flex-direction:column;gap:14px;">
+<div style="display:flex;gap:12px;align-items:center;"><span style="background:rgb(163,232,137);color:rgb(9,16,7);font-weight:600;font-size:13px;padding:4px 8px;">2a</span><span style="font-size:13px;color:rgb(120,184,100);">ASCII · фосфор (моно)</span></div>
+<div data-screen-label="2a mono" style="position:relative;width:720px;height:848px;background:rgb(0,0,0);overflow:hidden;box-shadow:inset 0 0 0 1px rgb(36,54,36);">
+<x-import component-from-global-scope="eye-ascii" mode="idle" color="mono" framing="{{ framing }}" ramp="{{ ramp }}" glitch="{{ glitch }}" hint-size="720px,848px" style="position:absolute;inset:0;"></x-import>
+</div>
+</div>
+<div id="2b" style="display:flex;flex-direction:column;gap:14px;">
+<div style="display:flex;gap:12px;align-items:center;"><span style="background:rgb(163,232,137);color:rgb(9,16,7);font-weight:600;font-size:13px;padding:4px 8px;">2b</span><span style="font-size:13px;color:rgb(120,184,100);">ASCII · цвета материалов</span></div>
+<div data-screen-label="2b color" style="position:relative;width:720px;height:848px;background:rgb(0,0,0);overflow:hidden;box-shadow:inset 0 0 0 1px rgb(36,54,36);">
+<x-import component-from-global-scope="eye-ascii" mode="idle" color="color" framing="{{ framing }}" ramp="{{ ramp }}" glitch="{{ glitch }}" hint-size="720px,848px" style="position:absolute;inset:0;"></x-import>
+</div>
+</div>
+<div id="2c" style="display:flex;flex-direction:column;gap:14px;">
+<div style="display:flex;gap:12px;align-items:center;"><span style="background:rgb(163,232,137);color:rgb(9,16,7);font-weight:600;font-size:13px;padding:4px 8px;">2c</span><span style="font-size:13px;color:rgb(120,184,100);">3D · без ASCII</span></div>
+<div data-screen-label="2c mesh" style="position:relative;width:720px;height:848px;background:rgb(0,0,0);overflow:hidden;box-shadow:inset 0 0 0 1px rgb(36,54,36);">
+<x-import component-from-global-scope="eye-ascii" mode="idle" color="mesh" framing="{{ framing }}" ramp="{{ ramp }}" glitch="{{ glitch }}" hint-size="720px,848px" style="position:absolute;inset:0;"></x-import>
+</div>
+</div>
+</div>
+</section>
+<section style="display:flex;flex-direction:column;gap:28px;padding:64px;font-family:'IBM Plex Mono',ui-monospace,monospace;">
+<div style="display:flex;flex-direction:column;gap:8px;color:rgb(120,184,100);">
+<span style="font-family:'Tiny5',monospace;font-size:28px;color:rgb(184,240,164);">01 / BULBASHENKO.COM — ЕДИНЫЙ ВХОД</span>
+<span style="font-size:13px;">Live 3D eye drone → ASCII. <a href="#1a">1a</a> — Figma layout. <a href="#1b">1b</a> — the real Authelia flow: passkey, password + TOTP, consent, password reset.</span>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:64px;align-items:flex-start;">
+
+<div id="1a" style="display:flex;flex-direction:column;gap:14px;">
+<div style="display:flex;gap:12px;align-items:center;"><span style="background:rgb(163,232,137);color:rgb(9,16,7);font-weight:600;font-size:13px;padding:4px 8px;">1a</span><span style="font-size:13px;color:rgb(120,184,100);">Figma design + 3D eye</span></div>
+<div data-screen-label="1a Figma" style="position:relative;width:1440px;height:960px;overflow:hidden;background:rgb(6,11,6);display:flex;flex-direction:column;">
+  <div style="height:70px;border:1px solid rgb(36,54,36);display:flex;padding:0 36px;justify-content:space-between;align-items:center;box-sizing:border-box;flex-shrink:0;">
+    <div style="display:flex;gap:12px;align-items:center;">
+      <span style="font-family:'Tiny5',monospace;font-size:28px;line-height:100%;color:rgb(163,232,137);">&gt;_</span>
+      <span style="font-family:'Tiny5',monospace;font-size:26px;line-height:100%;color:rgb(184,240,164);text-shadow:0 0 5px rgba(163,232,137,0.251);">BULBASHENKO.COM</span>
+      <div style="width:1px;height:20px;background:rgb(36,54,36);"></div>
+      <span style="font-size:11px;line-height:100%;color:rgb(120,184,100);">IDENTITY / SSO</span>
+    </div>
+    <div style="display:flex;gap:20px;align-items:center;font-size:12px;line-height:100%;">
+      <span style="color:rgb(91,140,76);">[ EN ]</span><span style="color:rgb(184,240,164);">[ RU ]</span><span style="color:rgb(91,140,76);">[ SK ]</span>
+    </div>
+  </div>
+  <div style="height:848px;display:flex;flex-shrink:0;">
+    <div style="width:720px;border:1px solid rgb(36,54,36);display:flex;flex-direction:column;padding:32px 40px;justify-content:space-between;align-items:center;box-sizing:border-box;">
+      <div style="align-self:stretch;display:flex;justify-content:space-between;align-items:center;height:16px;">
+        <span style="font-size:11px;line-height:100%;color:rgb(120,184,100);">~/identity/auth</span>
+        <span style="font-size:12px;line-height:100%;color:rgb(91,140,76);white-space:pre;">[ − ]  [ + ]</span>
+      </div>
+      <div style="width:480px;display:flex;flex-direction:column;gap:32px;">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:8px;align-items:center;"><div style="width:6px;height:6px;background:rgb(163,232,137);box-shadow:0 0 14px rgba(159,234,121,0.1882);"></div><span style="font-size:11px;line-height:100%;letter-spacing:1px;color:rgb(120,184,100);">ACCESS PORTAL / 01</span></div>
+          <span style="font-family:'Tiny5',monospace;font-size:64px;line-height:1;color:rgb(184,240,164);text-shadow:0 0 5px rgba(163,232,137,0.251);">Единый вход</span>
+          <span style="font-size:14px;line-height:1.7;color:rgb(120,184,100);white-space:pre-line;">Ваше пространство — в одном входе.
+Используйте рабочую почту или свой аккаунт.</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;"><span style="font-size:14px;line-height:100%;color:rgb(184,240,164);">Рабочая почта</span><span style="font-size:11px;line-height:100%;color:rgb(91,140,76);">EMAIL_ADDRESS</span></div>
+            <label style="height:58px;background:rgb(16,26,16);box-shadow:inset 0 0 0 1px rgb(120,184,100);display:flex;gap:12px;padding:0 18px;align-items:center;box-sizing:border-box;cursor:text;">
+              <span style="font-size:18px;line-height:100%;color:rgb(120,184,100);">&gt;</span>
+              <input value="{{ email }}" onChange="{{ onEmail }}" onKeyDown="{{ onEmailKey }}" spellCheck="false" style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:16px;color:rgb(184,240,164);caret-color:rgb(163,232,137);">
+            </label>
+            <sc-if value="{{ aIsError }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;line-height:1.6;color:rgb(238,132,112);">Введите корректный адрес почты.</span></sc-if>
+            <sc-if value="{{ aIsFound }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;line-height:1.6;color:rgb(163,232,137);">Провайдер найден: {{ aDomain }} → перенаправляем…</span></sc-if>
+            <sc-if value="{{ aIsIdle }}" hint-placeholder-val="{{ true }}"><span style="font-size:12px;line-height:1.6;color:rgb(120,184,100);">Мы найдём SSO-провайдера вашей организации.</span></sc-if>
+          </div>
+          <button onClick="{{ aContinue }}" style="height:58px;border:none;cursor:pointer;background:rgb(163,232,137);box-shadow:0 0 14px rgba(159,234,121,0.1882);display:flex;padding:0 20px;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;color:rgb(9,16,7);" style-hover="background:rgb(184,240,164);">
+            <span style="font-weight:600;font-size:14px;">[ ПРОДОЛЖИТЬ С SSO ]</span><span style="font-size:22px;">→</span>
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:14px;align-items:center;"><div style="height:1px;background:rgb(36,54,36);flex:1;"></div><span style="font-size:12px;color:rgb(91,140,76);">или войдите через</span><div style="height:1px;background:rgb(36,54,36);flex:1;"></div></div>
+          <div style="display:flex;gap:12px;">
+            <button style="flex:1;height:52px;border:none;cursor:pointer;background:rgb(11,19,11);box-shadow:inset 0 0 0 1px rgb(36,54,36);display:flex;gap:12px;justify-content:center;align-items:center;font-family:'IBM Plex Mono',monospace;" style-hover="box-shadow:inset 0 0 0 1px rgb(120,184,100);"><span style="font-weight:600;font-size:16px;color:rgb(120,184,100);">[G]</span><span style="font-size:14px;color:rgb(184,240,164);">Google</span></button>
+            <button style="flex:1;height:52px;border:none;cursor:pointer;background:rgb(11,19,11);box-shadow:inset 0 0 0 1px rgb(36,54,36);display:flex;gap:12px;justify-content:center;align-items:center;font-family:'IBM Plex Mono',monospace;" style-hover="box-shadow:inset 0 0 0 1px rgb(120,184,100);"><span style="font-weight:600;font-size:16px;color:rgb(120,184,100);">[M]</span><span style="font-size:14px;color:rgb(184,240,164);">Microsoft</span></button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <span style="font-size:12px;line-height:1.7;color:rgb(120,184,100);white-space:pre-line;">Пароль остаётся у вашего провайдера.
+Мы используем почту только для входа.</span>
+          <div style="display:flex;justify-content:space-between;font-size:12px;"><a href="#" style="color:rgb(184,240,164);">[ Нужна помощь? ]</a><a href="#" style="color:rgb(120,184,100);">[ Конфиденциальность ]</a></div>
+        </div>
+      </div>
+      <div style="align-self:stretch;display:flex;gap:8px;align-items:center;font-size:11px;line-height:100%;color:rgb(91,140,76);"><span>[ SECURE BY DESIGN ]</span><div style="height:1px;background:rgb(36,54,36);flex:1;"></div><span>SSO v.1.0</span></div>
+    </div>
+    <div style="width:720px;background:rgb(11,19,11);display:flex;flex-direction:column;padding:32px;justify-content:space-between;box-sizing:border-box;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;line-height:100%;"><span style="color:rgb(120,184,100);">[ IDENTITY VISUALIZER ]</span><span style="color:rgb(91,140,76);">ASCII / LIVE</span></div>
+      <div style="position:relative;height:504px;box-shadow:inset 0 0 0 1px rgb(36,54,36);background-image:linear-gradient(to right, rgba(36,54,36,0.17) 1px, transparent 1px),linear-gradient(to bottom, rgba(36,54,36,0.17) 1px, transparent 1px);background-size:24px 24px;">
+        <div style="position:absolute;left:20px;top:18px;right:20px;display:flex;justify-content:space-between;font-size:11px;line-height:100%;"><span style="color:rgb(91,140,76);">OBJECT_01 / HUMAN EYE</span><span style="color:{{ aStatusColor }};">● {{ aStatus }}</span></div>
+        <div style="position:absolute;left:9px;top:46px;width:638.4px;height:420px;overflow:hidden;background:rgb(9,16,7);box-shadow:0 0 14px rgba(159,234,121,0.1882);">
+          <x-import component-from-global-scope="eye-ascii" mode="{{ aMode }}" readout="gaze-1a" color="mono" framing="{{ framing }}" ramp="{{ ramp }}" glitch="{{ glitch }}" hint-size="638px,420px" style="position:absolute;inset:0;"></x-import>
+        </div>
+        <div style="position:absolute;left:20px;top:469px;right:20px;display:flex;justify-content:space-between;font-size:11px;line-height:100%;color:rgb(91,140,76);"><span id="gaze-1a" style="white-space:pre;">X: 0.000   Y: 0.000   Z: 1.000</span><span>[ 3D → ASCII ]</span></div>
+        <span style="position:absolute;left:0;top:-9px;font-size:18px;line-height:100%;color:rgb(120,184,100);">+</span>
+        <span style="position:absolute;left:646px;top:490px;font-size:18px;line-height:100%;color:rgb(120,184,100);">+</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding:0 20px;">
+        <span style="font-family:'Tiny5',monospace;font-size:42px;line-height:1;color:rgb(184,240,164);text-shadow:0 0 5px rgba(163,232,137,0.251);">ONE IDENTITY. EVERYWHERE.</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:rgb(120,184,100);">Один аккаунт. Всё ваше пространство.</span><span style="font-size:16px;color:rgb(163,232,137);animation:blink 1s steps(1) infinite;">█</span></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;line-height:100%;color:rgb(91,140,76);"><span>BULBASHENKO / DIGITAL SELF</span><span>SIGNAL: STABLE</span></div>
+    </div>
+  </div>
+  <div style="height:42px;border:1px solid rgb(36,54,36);display:flex;padding:0 36px;justify-content:space-between;align-items:center;box-sizing:border-box;flex-shrink:0;font-size:11px;line-height:100%;">
+    <div style="display:flex;gap:8px;align-items:center;"><div style="width:5px;height:5px;background:rgb(163,232,137);"></div><span style="color:rgb(120,184,100);">SYSTEM ONLINE</span><span style="color:rgb(91,140,76);">/ ENCRYPTED CONNECTION</span></div>
+    <span style="color:rgb(91,140,76);">© 2026 BULBASHENKO.COM</span>
+  </div>
+  <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom, transparent 0 3px, rgba(2,6,2,0.16) 3px 4px);"></div>
+</div>
+</div>
+
+<div id="1b" style="display:flex;flex-direction:column;gap:14px;">
+<div style="display:flex;gap:12px;align-items:center;"><span style="background:rgb(163,232,137);color:rgb(9,16,7);font-weight:600;font-size:13px;padding:4px 8px;">1b</span><span style="font-size:13px;color:rgb(120,184,100);">Authelia structure — clickable flow</span></div>
+<div data-screen-label="1b Authelia" style="position:relative;width:1440px;height:960px;overflow:hidden;background:rgb(3,6,3);display:flex;flex-direction:column;">
+  <sc-if value="{{ bgOn }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="ascii-bg" dim="{{ bgDim }}" hint-size="1440px,960px" style="position:absolute;inset:0;"></x-import></sc-if>
+  <div style="position:relative;height:70px;border:1px solid rgb(36,54,36);display:flex;padding:0 36px;justify-content:space-between;align-items:center;box-sizing:border-box;flex-shrink:0;background:rgba(6,11,6,0.72);backdrop-filter:blur(3px);">
+    <div style="display:flex;gap:12px;align-items:center;">
+      <span style="font-family:'Tiny5',monospace;font-size:28px;line-height:100%;color:rgb(163,232,137);">&gt;_</span>
+      <span style="font-family:'Tiny5',monospace;font-size:26px;line-height:100%;color:rgb(184,240,164);text-shadow:0 0 5px rgba(163,232,137,0.251);">BULBASHENKO.COM</span>
+      <div style="width:1px;height:20px;background:rgb(36,54,36);"></div>
+      <span style="font-size:11px;line-height:100%;color:rgb(120,184,100);">IDENTITY / SSO</span>
+    </div>
+    <div style="display:flex;gap:20px;align-items:center;font-size:12px;line-height:100%;">
+      <span style="color:rgb(91,140,76);">[ EN ]</span><span style="color:rgb(184,240,164);">[ RU ]</span><span style="color:rgb(91,140,76);">[ SK ]</span>
+    </div>
+  </div>
+  <div style="position:relative;height:848px;display:flex;flex-shrink:0;">
+    <div style="width: 720px; border: 1px solid rgb(36,54,36); display: flex; flex-direction: column; padding: 32px 40px; justify-content: space-between; align-items: center; box-sizing: border-box; border-color: #243624; background: rgba(6,11,6,0.62); backdrop-filter: blur(3px)">
+      <div style="align-self:stretch;display:flex;justify-content:space-between;align-items:center;height:16px;">
+        <span style="font-size:11px;line-height:100%;color:rgb(120,184,100);">{{ bPath }}</span>
+        <span style="font-size:11px;line-height:100%;color:rgb(91,140,76);">rd=bulbashenko.com/admin</span>
+      </div>
+      <div style="width:480px;display:flex;flex-direction:column;gap:28px;">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;gap:8px;align-items:center;"><div style="width:6px;height:6px;background:rgb(163,232,137);box-shadow:0 0 14px rgba(159,234,121,0.1882);"></div><span style="font-size:11px;line-height:100%;letter-spacing:1px;color:rgb(120,184,100);">{{ bStepLabel }}</span></div>
+          <span style="font-family:'Tiny5',monospace;font-size:64px;line-height:1;color:rgb(184,240,164);text-shadow:0 0 5px rgba(163,232,137,0.251);overflow-wrap:anywhere;">{{ bHeading }}</span>
+          <span style="font-size:14px;line-height:1.7;color:rgb(120,184,100);white-space:pre-line;">{{ bDesc }}</span>
+        </div>
+
+        <sc-if value="{{ isFirst }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <button onClick="{{ goPasskey }}" style="height:58px;border:none;cursor:pointer;background:rgb(163,232,137);box-shadow:0 0 14px rgba(159,234,121,0.1882);display:flex;padding:0 20px;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;color:rgb(9,16,7);" style-hover="background:rgb(184,240,164);">
+            <span style="font-weight:600;font-size:14px;">[ ВОЙТИ С ПАСКЛЮЧОМ ]</span><span style="font-size:22px;">→</span>
+          </button>
+          <div style="display:flex;gap:14px;align-items:center;"><div style="height:1px;background:rgb(36,54,36);flex:1;"></div><span style="font-size:12px;color:rgb(91,140,76);">или паролем</span><div style="height:1px;background:rgb(36,54,36);flex:1;"></div></div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;"><span style="font-size:14px;line-height:100%;color:rgb(184,240,164);">Имя пользователя</span><span style="font-size:11px;line-height:100%;color:rgb(91,140,76);">USERNAME</span></div>
+              <label style="height:52px;background:{{ userBg }};box-shadow:{{ userShadow }};display:flex;gap:12px;padding:0 18px;align-items:center;box-sizing:border-box;cursor:text;">
+                <span style="font-size:18px;line-height:100%;color:rgb(120,184,100);">&gt;</span>
+                <input value="{{ user }}" onChange="{{ onUser }}" onFocus="{{ focusUser }}" onBlur="{{ blur }}" onKeyDown="{{ onSignKey }}" autoComplete="username" spellCheck="false" placeholder="alex" style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:16px;color:rgb(184,240,164);caret-color:rgb(163,232,137);">
+              </label>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;"><span style="font-size:14px;line-height:100%;color:rgb(184,240,164);">Пароль</span><span style="font-size:11px;line-height:100%;color:rgb(91,140,76);">PASSWORD</span></div>
+              <label style="height:52px;background:{{ passBg }};box-shadow:{{ passShadow }};display:flex;gap:12px;padding:0 18px;align-items:center;box-sizing:border-box;cursor:text;">
+                <span style="font-size:18px;line-height:100%;color:rgb(120,184,100);">&gt;</span>
+                <input type="password" value="{{ pass }}" onChange="{{ onPass }}" onFocus="{{ focusPass }}" onBlur="{{ blur }}" onKeyDown="{{ onSignKey }}" autoComplete="current-password" style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:16px;letter-spacing:2px;color:rgb(184,240,164);caret-color:rgb(163,232,137);">
+              </label>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+              <button onClick="{{ toggleRemember }}" style="border:none;background:none;padding:0;cursor:pointer;display:flex;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgb(184,240,164);"><span style="color:rgb(163,232,137);white-space:pre;">{{ rememberMark }}</span><span>Запомнить меня</span></button>
+              <button onClick="{{ goReset }}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgb(120,184,100);" style-hover="color:rgb(184,240,164);">[ Сбросить пароль? ]</button>
+            </div>
+          </div>
+          <sc-if value="{{ bErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;line-height:1.6;color:rgb(238,132,112);">{{ bErr }}</span></sc-if>
+          <button onClick="{{ signIn }}" style="height:52px;border:none;cursor:pointer;background:rgb(11,19,11);box-shadow:inset 0 0 0 1px rgb(120,184,100);display:flex;padding:0 20px;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;color:rgb(184,240,164);" style-hover="background:rgb(16,26,16);box-shadow:inset 0 0 0 1px rgb(163,232,137);">
+            <span style="font-weight:600;font-size:14px;">[ ВОЙТИ ]</span><span style="font-size:20px;">→</span>
+          </button>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isPasskey }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <div style="height:58px;background:rgb(16,26,16);box-shadow:inset 0 0 0 1px rgb(120,184,100);display:flex;gap:12px;padding:0 18px;align-items:center;font-size:14px;color:rgb(184,240,164);"><span style="color:rgb(120,184,100);">&gt;</span><span>navigator.credentials.get()</span><span style="width:7px;height:17px;background:rgb(163,232,137);animation:blink 1s steps(1) infinite;"></span></div>
+          <button onClick="{{ toFirst }}" style="align-self:flex-start;border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgb(120,184,100);" style-hover="color:rgb(184,240,164);">[ Отмена ]</button>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isTotp }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;"><span style="font-size:14px;line-height:100%;color:rgb(184,240,164);">Одноразовый пароль</span><span style="font-size:11px;line-height:100%;color:rgb(91,140,76);">TOTP / 6 DIGITS</span></div>
+            <div style="position:relative;display:flex;gap:10px;">
+              <sc-for list="{{ otpCells }}" as="cell" hint-placeholder-count="6">
+                <div style="flex:1;height:58px;background:rgb(16,26,16);box-shadow:{{ cell.shadow }};display:flex;align-items:center;justify-content:center;font-size:22px;color:rgb(184,240,164);">{{ cell.ch }}</div>
+              </sc-for>
+              <input value="{{ otp }}" onChange="{{ onOtp }}" onFocus="{{ focusOtp }}" onBlur="{{ blur }}" inputMode="numeric" autoComplete="one-time-code" autoFocus="{{ true }}" maxLength="6" style="position:absolute;inset:0;opacity:0;cursor:text;font-size:16px;">
+            </div>
+          </div>
+          <sc-if value="{{ bErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;line-height:1.6;color:rgb(238,132,112);">{{ bErr }}</span></sc-if>
+          <sc-if value="{{ showMethods }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:12px;">
+              <button onClick="{{ goPasskey }}" style="flex:1;height:52px;border:none;cursor:pointer;background:rgb(11,19,11);box-shadow:inset 0 0 0 1px rgb(36,54,36);display:flex;gap:12px;justify-content:center;align-items:center;font-family:'IBM Plex Mono',monospace;" style-hover="box-shadow:inset 0 0 0 1px rgb(120,184,100);"><span style="font-weight:600;font-size:16px;color:rgb(120,184,100);">[P]</span><span style="font-size:14px;color:rgb(184,240,164);">Паскей</span></button>
+              <button onClick="{{ toggleMethods }}" style="flex:1;height:52px;border:none;cursor:pointer;background:rgb(16,26,16);box-shadow:inset 0 0 0 1px rgb(120,184,100);display:flex;gap:12px;justify-content:center;align-items:center;font-family:'IBM Plex Mono',monospace;"><span style="font-weight:600;font-size:16px;color:rgb(163,232,137);">[T]</span><span style="font-size:14px;color:rgb(184,240,164);">Код из приложения</span></button>
+            </div>
+          </sc-if>
+          <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <button onClick="{{ toggleMethods }}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgb(184,240,164);">[ Другой способ ]</button>
+            <button onClick="{{ toFirst }}" style="border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgb(120,184,100);" style-hover="color:rgb(184,240,164);">[ Выйти ]</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isConsent }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <div style="display:flex;flex-direction:column;box-shadow:inset 0 0 0 1px rgb(36,54,36);background:rgb(11,19,11);">
+            <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid rgb(24,43,22);font-size:13px;"><span style="color:rgb(184,240,164);">{{ s.id }}</span><span style="color:rgb(120,184,100);text-align:right;">{{ s.label }}</span></div>
+            </sc-for>
+          </div>
+          <button onClick="{{ toggleConsentRemember }}" style="align-self:flex-start;border:none;background:none;padding:0;cursor:pointer;display:flex;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgb(184,240,164);"><span style="color:rgb(163,232,137);white-space:pre;">{{ consentMark }}</span><span>Запомнить решение для этого приложения</span></button>
+          <div style="display:flex;gap:12px;">
+            <button onClick="{{ accept }}" style="flex:1;height:58px;border:none;cursor:pointer;background:rgb(163,232,137);box-shadow:0 0 14px rgba(159,234,121,0.1882);display:flex;padding:0 20px;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;color:rgb(9,16,7);" style-hover="background:rgb(184,240,164);"><span style="font-weight:600;font-size:14px;">[ РАЗРЕШИТЬ ]</span><span style="font-size:22px;">→</span></button>
+            <button onClick="{{ deny }}" style="flex:0 0 160px;height:58px;border:none;cursor:pointer;background:rgb(11,19,11);box-shadow:inset 0 0 0 1px rgb(36,54,36);font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;color:rgb(184,240,164);" style-hover="box-shadow:inset 0 0 0 1px rgb(120,184,100);">[ ОТКАЗАТЬ ]</button>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isReset }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;"><span style="font-size:14px;line-height:100%;color:rgb(184,240,164);">Имя пользователя</span><span style="font-size:11px;line-height:100%;color:rgb(91,140,76);">USERNAME</span></div>
+            <label style="height:52px;background:rgb(16,26,16);box-shadow:inset 0 0 0 1px rgb(120,184,100);display:flex;gap:12px;padding:0 18px;align-items:center;box-sizing:border-box;cursor:text;">
+              <span style="font-size:18px;line-height:100%;color:rgb(120,184,100);">&gt;</span>
+              <input value="{{ user }}" onChange="{{ onUser }}" onKeyDown="{{ onResetKey }}" spellCheck="false" placeholder="alex" style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:16px;color:rgb(184,240,164);caret-color:rgb(163,232,137);">
+            </label>
+          </div>
+          <sc-if value="{{ bErr }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;line-height:1.6;color:rgb(238,132,112);">{{ bErr }}</span></sc-if>
+          <button onClick="{{ sendReset }}" style="height:58px;border:none;cursor:pointer;background:rgb(163,232,137);box-shadow:0 0 14px rgba(159,234,121,0.1882);display:flex;padding:0 20px;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;color:rgb(9,16,7);" style-hover="background:rgb(184,240,164);"><span style="font-weight:600;font-size:14px;">[ ОТПРАВИТЬ ССЫЛКУ ]</span><span style="font-size:22px;">→</span></button>
+          <button onClick="{{ toFirst }}" style="align-self:flex-start;border:none;background:none;padding:0;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgb(120,184,100);" style-hover="color:rgb(184,240,164);">[ Отмена ]</button>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isEnd }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ toFirst }}" style="align-self:flex-start;height:52px;border:none;cursor:pointer;background:rgb(11,19,11);box-shadow:inset 0 0 0 1px rgb(120,184,100);padding:0 20px;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;color:rgb(184,240,164);" style-hover="background:rgb(16,26,16);">[ НА ЭКРАН ВХОДА ]</button>
+        </sc-if>
+      </div>
+      <div style="align-self:stretch;display:flex;gap:8px;align-items:center;font-size:11px;line-height:100%;color:rgb(91,140,76);"><span>[ SECURE BY DESIGN ]</span><div style="height:1px;background:rgb(36,54,36);flex:1;"></div><span>AUTHELIA 4.39 / OIDC</span></div>
+    </div>
+    <div style="position: relative; width: 711px; background: rgba(0,0,0,0.35); overflow: hidden; top: 0px; height: 843px">
+      <x-import component-from-global-scope="eye-ascii" mode="{{ bMode }}" color="{{ eyeColor }}" framing="{{ framing }}" ramp="{{ ramp }}" glitch="{{ glitch }}" hint-size="720px,848px" style="position: absolute; inset: 0; top: 0px; bottom: 0px"></x-import>
+    </div>
+  </div>
+  <div style="position:relative;height:42px;border:1px solid rgb(36,54,36);display:flex;padding:0 36px;justify-content:space-between;align-items:center;box-sizing:border-box;flex-shrink:0;font-size:11px;line-height:100%;background:rgba(6,11,6,0.72);backdrop-filter:blur(3px);">
+    <div style="display:flex;gap:8px;align-items:center;"><div style="width:5px;height:5px;background:rgb(163,232,137);"></div><span style="color:rgb(120,184,100);">SYSTEM ONLINE</span><span style="color:rgb(91,140,76);">/ ENCRYPTED CONNECTION</span></div>
+    <span style="color:rgb(91,140,76);">© 2026 BULBASHENKO.COM</span>
+  </div>
+  <div style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(2,6,2,0.16) 3px 4px); left: -2px; top: -116px"></div>
+</div>
+</div>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;eyeColor&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;mono&quot;,&quot;color&quot;,&quot;mesh&quot;],&quot;default&quot;:&quot;mono&quot;,&quot;tsType&quot;:&quot;'mono'|'color'|'mesh'&quot;},&quot;glitch&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;eyeFraming&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;eye&quot;],&quot;default&quot;:&quot;full&quot;,&quot;tsType&quot;:&quot;'full'|'eye'&quot;},&quot;asciiRamp&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;classic&quot;,&quot;punk&quot;,&quot;block&quot;],&quot;default&quot;:&quot;block&quot;,&quot;tsType&quot;:&quot;'classic'|'punk'|'block'&quot;},&quot;background&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Background&quot;},&quot;bgDim&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0,&quot;max&quot;:1,&quot;step&quot;:0.05,&quot;default&quot;:0.4,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Background&quot;}}">
+class Component extends DCLogic {
+  state = { email: 'alex@company.com', aPhase: 'idle', step: 'first', user: '', pass: '', remember: true, otp: '', err: '', flash: false, focus: '', methods: false, consentRemember: true };
+  timers = [];
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); }
+  componentWillUnmount() { this.timers.forEach(clearTimeout); }
+  fail(err) {
+    this.setState({ err, flash: true });
+    this.later(() => this.setState({ flash: false }), 900);
+  }
+  go(step, extra) { this.setState({ step, err: '', methods: false, ...(extra || {}) }); }
+
+  aContinue = () => {
+    if (!/^\S+@\S+\.\S+$/.test(this.state.email)) {
+      this.setState({ aPhase: 'error' }); this.later(() => this.setState({ aPhase: 'idle' }), 1400); return;
+    }
+    this.setState({ aPhase: 'scan' }); this.later(() => this.setState({ aPhase: 'found' }), 1700);
+  };
+  signIn = () => {
+    const { user, pass } = this.state;
+    if (!user.trim() || !pass || pass === 'wrong') return this.fail('Неверное имя пользователя или пароль.');
+    this.go('verifying'); this.later(() => this.go('totp', { otp: '' }), 900);
+  };
+  goPasskey = () => { this.go('passkey'); this.later(() => { if (this.state.step === 'passkey') this.go('consent'); }, 2600); };
+  onOtp = (e) => {
+    const otp = e.target.value.replace(/\D/g, '').slice(0, 6);
+    this.setState({ otp, err: '' });
+    if (otp.length === 6) this.later(() => {
+      if (otp === '000000') { this.setState({ otp: '' }); this.fail('Код не подошёл. Попробуйте ещё раз.'); return; }
+      this.go('verifying'); this.later(() => this.go('consent'), 900);
+    }, 150);
+  };
+  sendReset = () => { if (!this.state.user.trim()) return this.fail('Укажите имя пользователя.'); this.go('resetSent'); };
+
+  renderVals() {
+    const s = this.state, step = s.step;
+    const A = {
+      idle: ['AWAITING INPUT', 'idle', 'rgb(120,184,100)'],
+      scan: ['LOOKING UP PROVIDER', 'scan', 'rgb(163,232,137)'],
+      found: ['PROVIDER FOUND', 'ok', 'rgb(163,232,137)'],
+      error: ['INVALID ADDRESS', 'error', 'rgb(238,132,112)'],
+    }[s.aPhase];
+    const name = s.user.trim() || 'alex';
+    const S = {
+      first:     ['~/identity/auth', 'ACCESS PORTAL / 01', 'Вход', 'Один аккаунт для всех сервисов bulbashenko.com.\nРегистрации нет — аккаунт выдаёт администратор.', 'AWAITING INPUT'],
+      passkey:   ['~/identity/auth/passkey', 'STEP 01 / 02 — ПАСКЛЮЧ', 'Паскей', 'Подтвердите вход на устройстве:\nотпечаток, лицо или PIN-код.', 'WEBAUTHN / WAITING'],
+      verifying: ['~/identity/auth', 'ПРОВЕРКА', 'Проверка…', 'Сверяем данные с каталогом пользователей.', 'VERIFYING'],
+      totp:      ['~/identity/auth/2fa', 'STEP 02 / 03 — ВТОРОЙ ФАКТОР', 'Привет, ' + name, 'Введите 6-значный код\nиз приложения-аутентификатора.', '2FA REQUIRED'],
+      consent:   ['~/identity/consent', 'STEP 03 / 03 — СОГЛАСИЕ', 'Доступ', 'Приложение bulbashenko.com просит\nдоступ к вашему аккаунту.', 'CONSENT REQUEST'],
+      done:      ['~/identity/consent', 'ACCESS GRANTED', 'Готово', 'Вход выполнен.\nПеренаправляем на bulbashenko.com/admin…', 'IDENTITY CONFIRMED'],
+      denied:    ['~/identity/consent', 'ACCESS DENIED', 'Отказано', 'Приложение не получило доступ к аккаунту.', 'CONSENT DENIED'],
+      reset:     ['~/identity/reset-password', 'RECOVERY / 01', 'Сброс пароля', 'Ссылка для сброса придёт\nна почту вашего аккаунта.', 'RECOVERY'],
+      resetSent: ['~/identity/reset-password', 'RECOVERY / 02', 'Проверьте почту', 'Если такой аккаунт есть, мы отправили\nписьмо со ссылкой для сброса пароля.', 'MAIL SENT'],
+    }[step];
+    let bMode = 'idle';
+    if (s.flash) bMode = 'error';
+    else if (step === 'passkey' || step === 'verifying') bMode = 'scan';
+    else if (step === 'done' || step === 'resetSent') bMode = 'ok';
+    else if (s.focus === 'pass') bMode = 'closed';
+    const bad = s.flash || step === 'denied';
+    const on = 'inset 0 0 0 1px rgb(120,184,100)', off = 'inset 0 0 0 1px rgb(36,54,36)';
+    return {
+      framing: this.props.eyeFraming ?? 'full',
+      glitch: (this.props.glitch ?? true) ? 'on' : 'off',
+      ramp: this.props.asciiRamp ?? 'block',
+      eyeColor: this.props.eyeColor ?? 'mono',
+      bgOn: this.props.background ?? true,
+      bgDim: String(this.props.bgDim ?? 0.4),
+      email: s.email,
+      onEmail: (e) => this.setState({ email: e.target.value, aPhase: 'idle' }),
+      onEmailKey: (e) => { if (e.key === 'Enter') this.aContinue(); },
+      aContinue: this.aContinue,
+      aStatus: A[0], aMode: A[1], aStatusColor: A[2],
+      aIsIdle: s.aPhase === 'idle' || s.aPhase === 'scan', aIsError: s.aPhase === 'error', aIsFound: s.aPhase === 'found',
+      aDomain: s.email.split('@')[1] || '',
+
+      bPath: S[0], bStepLabel: S[1], bHeading: S[2], bDesc: S[3],
+      bStatus: s.flash ? 'ACCESS DENIED' : S[4],
+      bStatusColor: bad ? 'rgb(238,132,112)' : 'rgb(120,184,100)',
+      bMode, bErr: s.err,
+      isFirst: step === 'first', isPasskey: step === 'passkey', isTotp: step === 'totp', isConsent: step === 'consent',
+      isReset: step === 'reset', isEnd: ['done', 'denied', 'resetSent'].includes(step),
+      user: s.user, pass: s.pass, otp: s.otp,
+      onUser: (e) => this.setState({ user: e.target.value, err: '' }),
+      onPass: (e) => this.setState({ pass: e.target.value, err: '' }),
+      onSignKey: (e) => { if (e.key === 'Enter') this.signIn(); },
+      onResetKey: (e) => { if (e.key === 'Enter') this.sendReset(); },
+      focusUser: () => this.setState({ focus: 'user' }),
+      focusPass: () => this.setState({ focus: 'pass' }),
+      focusOtp: () => this.setState({ focus: 'otp' }),
+      blur: () => this.setState({ focus: '' }),
+      userShadow: s.focus === 'user' ? on : off, userBg: s.focus === 'user' ? 'rgb(16,26,16)' : 'rgb(11,19,11)',
+      passShadow: s.focus === 'pass' ? on : off, passBg: s.focus === 'pass' ? 'rgb(16,26,16)' : 'rgb(11,19,11)',
+      rememberMark: s.remember ? '[x]' : '[ ]',
+      consentMark: s.consentRemember ? '[x]' : '[ ]',
+      toggleRemember: () => this.setState({ remember: !s.remember }),
+      toggleConsentRemember: () => this.setState({ consentRemember: !s.consentRemember }),
+      otpCells: Array.from({ length: 6 }, (_, i) => ({
+        ch: s.otp[i] || '',
+        shadow: s.err ? 'inset 0 0 0 1px rgb(238,132,112)' : (s.focus === 'otp' && i === Math.min(5, s.otp.length)) ? 'inset 0 0 0 1px rgb(163,232,137)' : s.otp[i] ? on : off,
+      })),
+      onOtp: this.onOtp,
+      showMethods: s.methods,
+      toggleMethods: () => this.setState({ methods: !s.methods }),
+      scopes: [
+        { id: 'openid', label: 'Идентификатор аккаунта' },
+        { id: 'profile', label: 'Имя и логин' },
+        { id: 'email', label: 'Адрес почты' },
+        { id: 'groups', label: 'Группы: site-admins' },
+      ],
+      signIn: this.signIn, goPasskey: this.goPasskey, sendReset: this.sendReset,
+      goReset: () => this.go('reset'),
+      toFirst: () => this.go('first', { pass: '', otp: '' }),
+      accept: () => this.go('done'),
+      deny: () => this.go('denied'),
+    };
+  }
+}
+</script>
+</body>
+</html>

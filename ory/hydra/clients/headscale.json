@@ -1,0 +1,12 @@
+{
+  "client_id": "headscale",
+  "client_name": "VPN (Headscale)",
+  "client_secret": "${OIDC_HEADSCALE_CLIENT_SECRET}",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "grant_types": ["authorization_code"],
+  "response_types": ["code"],
+  "scope": "openid profile email groups",
+  "redirect_uris": ["https://hs.bulbashenko.com/oidc/callback"],
+  "skip_consent": true,
+  "metadata": { "required_group": "vpn-users" }
+}
