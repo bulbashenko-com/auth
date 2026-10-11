@@ -35,7 +35,14 @@ test("password, TOTP enrolment, then every sign-in needs the second factor", asy
   await page.getByRole("link", { name: /Выйти/ }).first().click()
   await page.goto("/login")
   await passwordStep(page, person)
-  await expect(page.getByRole("heading", { name: new RegExp(`Привет, ${person.username}|Ещё шаг`) })).toBeVisible()
+  const secondFactor = page.getByRole("heading", { name: new RegExp(`Привет, ${person.username}|Ещё шаг`) })
+  await expect(secondFactor).toBeVisible()
+
+  // Leaving the second-factor screen with only the password done leads back to it, not into a redirect loop.
+  for (const path of ["/", "/login"]) {
+    await page.goto(path)
+    await expect(secondFactor).toBeVisible()
+  }
 
   await totpStep(page, "000000")
   await expect(page.locator(".msg.error")).toContainText(/Код не подошёл|invalid/)
