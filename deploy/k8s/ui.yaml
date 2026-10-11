@@ -13,6 +13,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        # The image's user is `node` (uid 1000); the kubelet needs the numeric id.
+        runAsUser: 1000
+        runAsGroup: 1000
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: sso-ui
@@ -70,6 +73,9 @@ spec:
       restartPolicy: OnFailure
       securityContext:
         runAsNonRoot: true
+        # The image's user is `node` (uid 1000); the kubelet needs the numeric id.
+        runAsUser: 1000
+        runAsGroup: 1000
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: sync
