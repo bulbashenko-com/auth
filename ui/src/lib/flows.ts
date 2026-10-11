@@ -28,6 +28,30 @@ export function startFlow(kind: FlowKind, params: SearchParams): never {
   redirect(`${env.publicUrl}/self-service/${kind}/browser${query.size ? `?${query}` : ""}`)
 }
 
+/**
+ * Starts a fresh flow. A login started while the session has only its first factor asks for the second (aal=aal2).
+ * Without it Kratos answers "already signed in" and sends the browser to return_to (by default /), which needs two
+ * factors and sends it back to /login: a redirect loop.
+ */
+async function restartFlow(kind: FlowKind, params: SearchParams): Promise<never> {
+  if (kind === "login" && !first(params.aal) && !first(params.refresh) && (await needsSecondFactor())) {
+    startFlow(kind, { ...params, aal: "aal2" })
+  }
+  startFlow(kind, params)
+}
+
+/** True when the browser's session lacks the second factor Kratos requires (required_aal: highest_available). */
+async function needsSecondFactor() {
+  try {
+    await frontend().toSession({ cookie: await cookieHeader() })
+    return false
+  } catch (error) {
+    if (!(error instanceof ResponseError) || error.response.status !== 403) return false
+    const body = (await error.response.json().catch(() => ({}))) as { error?: { id?: string } }
+    return body.error?.id === "session_aal2_required"
+  }
+}
+
 async function cookieHeader() {
   return (await headers()).get("cookie") ?? undefined
 }
@@ -38,7 +62,7 @@ async function cookieHeader() {
  */
 export async function loadFlow<T>(kind: FlowKind, params: SearchParams): Promise<T> {
   const id = first(params.flow)
-  if (!id) startFlow(kind, params)
+  if (!id) return restartFlow(kind, params)
   const cookie = await cookieHeader()
   const api = frontend()
   try {
@@ -73,7 +97,7 @@ async function handleFlowError(error: unknown, kind: FlowKind, params: SearchPar
   // 403 (CSRF / another browser), 404 (unknown), 410 (expired): a fresh flow.
   if ([403, 404, 410].includes(status)) {
     const { flow: _drop, ...rest } = params
-    startFlow(kind, rest)
+    await restartFlow(kind, rest)
   }
   throw error
 }
