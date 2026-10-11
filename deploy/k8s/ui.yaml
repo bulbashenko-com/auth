@@ -86,6 +86,7 @@ spec:
             - { name: OIDC_SITE_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_SITE_CLIENT_SECRET } } }
             - { name: OIDC_COOLIFY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_COOLIFY_CLIENT_SECRET } } }
             - { name: OIDC_HEADSCALE_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_HEADSCALE_CLIENT_SECRET } } }
+            - { name: OIDC_FLUXWEB_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_FLUXWEB_CLIENT_SECRET } } }
           resources:
             requests: { cpu: 10m, memory: 48Mi }
           securityContext:

@@ -265,6 +265,7 @@ services:
       OIDC_SITE_CLIENT_SECRET: ${OIDC_SITE_CLIENT_SECRET:?}
       OIDC_COOLIFY_CLIENT_SECRET: ${OIDC_COOLIFY_CLIENT_SECRET:?}
       OIDC_HEADSCALE_CLIENT_SECRET: ${OIDC_HEADSCALE_CLIENT_SECRET:?}
+      OIDC_FLUXWEB_CLIENT_SECRET: ${OIDC_FLUXWEB_CLIENT_SECRET:?}
     volumes:
       - ./ory/hydra/clients:/app/clients:ro
     # Plain-text secrets of the confidential clients; Hydra stores only their hashes.
