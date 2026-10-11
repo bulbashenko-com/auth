@@ -14,7 +14,7 @@ RUN npm run build
 
 FROM node:24.21.0-alpine AS runtime
 LABEL org.opencontainers.image.title="auth.bulbashenko.com UI" \
-      org.opencontainers.image.source="https://github.com/bulbashenko/auth" \
+      org.opencontainers.image.source="https://github.com/bulbashenko-com/auth" \
       org.opencontainers.image.licenses="MIT"
 WORKDIR /app
 ENV NODE_ENV=production \

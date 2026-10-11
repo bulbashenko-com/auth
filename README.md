@@ -45,6 +45,12 @@ Groups decide access. Each OIDC client names one group in `metadata.required_gro
 | `mail-users` | Mail clients and the Stalwart web UI |
 | `vpn-users` | Joining the VPN mesh (Headscale) |
 
+## Deploy on Kubernetes
+
+`kustomization.yaml` at the root is a Kustomize base built from the same `ory/` files that `compose.yml` mounts: Deployments for Kratos, Hydra and Keto (each runs its migration as an init container), Oathkeeper and the UI, the `hydra-clients` Job, and Traefik routes (`auth-public` on the `web` entrypoint, `auth-admin` for `users.int` behind the mesh and Oathkeeper). Service names match the compose stack, so the configs' internal URLs work unchanged.
+
+The deploying side provides the namespace, the image tag and a Secret `auth` with `KRATOS_DSN`, `HYDRA_DSN`, `KETO_DSN`, `KRATOS_SECRETS_{COOKIE,DEFAULT,CIPHER,PAGINATION}`, `HYDRA_SECRETS_{SYSTEM,COOKIE,PAGINATION}`, `SMTP_CONNECTION_URI`, `SMTP_SENDER` and `OIDC_{SITE,COOLIFY,HEADSCALE}_CLIENT_SECRET`. bulbashenko.com deploys it from [bulbashenko-com/infra](https://github.com/bulbashenko-com/infra), pinned to one commit of this repo; `.github/workflows/image.yml` builds `ghcr.io/bulbashenko-com/auth-ui:<commit>` for that commit.
+
 ## Deploy on Coolify
 
 1. **Databases.** In the shared Postgres, create three databases, each with its own role:
