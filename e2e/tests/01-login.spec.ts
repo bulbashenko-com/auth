@@ -20,7 +20,7 @@ test("wrong password shows an error", async ({ page }) => {
   const person = await createPerson(["mail-users"])
   await page.goto("/login")
   await passwordStep(page, { ...person, password: "wrong-password-123" })
-  await expect(page.getByRole("alert")).toContainText("Неверное имя пользователя или пароль")
+  await expect(page.locator(".msg.error")).toContainText("Неверное имя пользователя или пароль")
 })
 
 test("password, TOTP enrolment, then every sign-in needs the second factor", async ({ page }) => {
@@ -38,7 +38,7 @@ test("password, TOTP enrolment, then every sign-in needs the second factor", asy
   await expect(page.getByRole("heading", { name: new RegExp(`Привет, ${person.username}|Ещё шаг`) })).toBeVisible()
 
   await totpStep(page, "000000")
-  await expect(page.getByRole("alert")).toContainText(/Код не подошёл|invalid/)
+  await expect(page.locator(".msg.error")).toContainText(/Код не подошёл|invalid/)
 
   await totpStep(page, await freshTotp(secret))
   await expect(page.getByRole("heading", { name: "Готово" })).toBeVisible()
