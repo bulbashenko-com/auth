@@ -18,7 +18,7 @@ x-ory-env: &ory-env
 services:
   # TCP proxy to the shared Postgres; the only service on the `coolify` network.
   dbproxy:
-    image: nginx:1.30.5-alpine
+    image: nginx:1.31.6-alpine
     restart: unless-stopped
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST:?}
