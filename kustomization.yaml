@@ -33,6 +33,7 @@ configMapGenerator:
     files:
       - ory/hydra/clients/bulbashenko-site.json
       - ory/hydra/clients/coolify.json
+      - ory/hydra/clients/flux-web.json
       - ory/hydra/clients/headscale.json
       - ory/hydra/clients/stalwart-webui.json
       - ory/hydra/clients/thunderbird.json

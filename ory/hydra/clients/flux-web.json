@@ -1,0 +1,12 @@
+{
+  "client_id": "flux-web",
+  "client_name": "Flux (cluster GitOps UI)",
+  "client_secret": "${OIDC_FLUXWEB_CLIENT_SECRET}",
+  "token_endpoint_auth_method": "client_secret_basic",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "scope": "openid offline_access profile email groups",
+  "redirect_uris": ["https://flux.int.bulbashenko.com/oauth2/callback"],
+  "skip_consent": true,
+  "metadata": { "required_group": "infra-admins" }
+}
