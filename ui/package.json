@@ -20,15 +20,15 @@
     "@fontsource/tiny5": "5.3.0",
     "@ory/client-fetch": "1.22.66",
     "next": "16.4.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "server-only": "0.0.1",
     "three": "0.186.1"
   },
   "devDependencies": {
     "@types/node": "24.10.1",
-    "@types/react": "19.2.7",
-    "@types/react-dom": "19.2.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "@types/three": "0.181.0",
     "typescript": "5.9.3"
   }
