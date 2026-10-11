@@ -1,30 +1,138 @@
-// Ported from design/eye-ascii.js (Claude Design "Bulbashenko SSO"). Only change: three.js is bundled from npm.
-// <eye-ascii mode="idle|closed|scan|ok|error" readout="elementId" framing="eye|full" ramp="classic|punk|block">
-// 3D eye drone (three.js) rendered offscreen and resampled into an ASCII glyph grid.
+// Ported from design/eye-ascii.js (Claude Design "Bulbashenko SSO"). Changes: three.js is bundled from npm, and the ASCII
+// pass runs in shaders on the GPU (the design read the frame back with getImageData and drew every cell with fillText).
+// <eye-ascii mode="idle|closed|scan|ok|error" readout="elementId" framing="eye|full" ramp="classic|punk|block" color="mono|color|mesh" glitch="on">
+// 3D eye drone (three.js) rendered into a render target, averaged per cell, and drawn as glyphs from an atlas texture.
+// Dispatches "visual:fail" on window when WebGL2 is unavailable or the context is lost.
 (() => {
 if (customElements.get('eye-ascii')) return;
 let threeP;
 // three.js comes from npm and is bundled: no third-party script on the login page.
 const loadThree = () => threeP || (threeP = import('three'));
 const RAMPS = { classic: ' .:-=+*#%@', punk: " .'`,:;!i|/\\(){}[]xX%&#@", block: ' ░▒▓█' };
-const mkPal = (stops) => Array.from({ length: 16 }, (_, k) => {
+const GLITCH = '01<>/\\|=+*:;$#ABCDEF';
+// Every glyph in the atlas; a cell's glyph id is its index here + 1, and 0 means an empty cell.
+const GLYPHS = [...new Set(['.', ...Object.values(RAMPS).join(''), ...GLITCH])].filter((c) => c !== ' ');
+const gid = (c) => GLYPHS.indexOf(c) + 1;
+const mkPal = (stops) => new Float32Array(Array.from({ length: 16 }, (_, k) => {
   const l = k / 15;
   let i = 0; while (i < stops.length - 2 && l > stops[i + 1][0]) i++;
   const [a, ca] = stops[i], [b, cb] = stops[i + 1], f = Math.min(1, Math.max(0, (l - a) / (b - a)));
-  return `rgb(${ca.map((v, j) => Math.round(v + (cb[j] - v) * f)).join(',')})`;
-});
+  return ca.map((v, j) => Math.round(v + (cb[j] - v) * f) / 255);
+}).flat());
 const PAL = mkPal([[0, [34, 58, 31]], [0.35, [91, 140, 76]], [0.7, [163, 232, 137]], [1, [214, 250, 196]]]);
 const PAL_ERR = mkPal([[0, [64, 28, 24]], [0.35, [160, 78, 64]], [0.7, [238, 132, 112]], [1, [255, 204, 190]]]);
 const CW = 8.4, CH = 10;
-let SHARED = null;
-function sharedRenderer(THREE) {
-  if (SHARED && !SHARED.getContext().isContextLost()) return SHARED;
-  const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-  r.setPixelRatio(1); r.setClearColor(0x000000, 0); r.setSize(2, 2, false);
-  r.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault());
-  SHARED = r; return r;
-}
+// Glyphs are 14px tall in 10px rows, so each one spills into the rows above and below: atlas tiles are three rows high.
+const TILE_ROWS = 3;
+// Atlas tiles also carry this many device pixels on each side for the anti-aliased glyph edges.
+const PAD = 2;
 const rnd = (n, s) => { const v = Math.sin(n * 12.9898 + s * 78.233) * 43758.5453; return v - Math.floor(v); };
+
+const VERT = 'void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }';
+const SRGB = 'vec3 toSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, c)); }';
+
+// Pass 1, one fragment per cell: average the scene under the cell, pick its glyph and colour.
+// Output: rgb = glyph colour (sRGB), a = glyph id / 255.
+const CELL_FRAG = `
+uniform sampler2D uScene;
+uniform vec2 uGrid;
+uniform int uRamp[32];
+uniform int uRampLen;
+uniform int uGlitchGlyphs[32];
+uniform int uGlitchLen;
+uniform int uDot;
+uniform vec3 uPal[16];
+uniform bool uChroma;
+uniform bool uErr;
+uniform bool uGlitch;
+uniform vec3 uBands[6];
+uniform int uBandCount;
+uniform float uSeed;
+${SRGB}
+float hash(uvec3 v) {
+  v = v * 1664525u + 1013904223u;
+  v.x += v.y * v.z; v.y += v.z * v.x; v.z += v.x * v.y;
+  v ^= v >> 16u;
+  v.x += v.y * v.z;
+  return float(v.x) / 4294967295.0;
+}
+void main() {
+  ivec2 cell = ivec2(gl_FragCoord.xy);
+  int cols = int(uGrid.x), rows = int(uGrid.y);
+  int y = rows - 1 - cell.y;
+  int off = 0;
+  if (uGlitch) for (int i = 0; i < 6; i++) {
+    if (i >= uBandCount) break;
+    if (y >= int(uBands[i].x) && y < int(uBands[i].y)) { off = int(uBands[i].z); break; }
+  }
+  int sx = cell.x - off;
+  sx -= cols * int(floor(float(sx) / float(cols)));
+  vec2 base = vec2(float(sx), float(cell.y)) / uGrid;
+  vec4 sum = vec4(0.0);
+  for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) sum += texture2D(uScene, base + (vec2(i, j) + 0.5) / (4.0 * uGrid));
+  sum /= 16.0;
+  float a = sum.a * 255.0;
+  if (a < 0.5) { gl_FragColor = vec4(0.0); return; }
+  vec3 c = toSrgb(sum.rgb / sum.a);
+  float l = min(1.0, pow(dot(c, vec3(0.299, 0.587, 0.114)), 1.35) * 1.05);
+  int g;
+  if (l < 0.035) {
+    if (a <= 30.0) { gl_FragColor = vec4(0.0); return; }
+    g = uDot; l = 0.1;
+  } else g = uRamp[min(uRampLen - 1, 1 + int(floor(l * float(uRampLen - 2) + 0.5)))];
+  vec3 col;
+  if (uChroma) {
+    float q = (90.0 + 165.0 * l) / 255.0 / max(max(c.r, c.g), max(c.b, 1.0 / 255.0));
+    col = uErr ? vec3((110.0 + 145.0 * l) / 255.0, c.g * q * 0.45, c.b * q * 0.4) : min(c * q, 1.0);
+  } else col = uPal[min(15, int(l * 16.0))];
+  uint s = uint(uSeed);
+  if (uGlitch && hash(uvec3(cell, s)) < 0.04) g = uGlitchGlyphs[min(uGlitchLen - 1, int(hash(uvec3(cell, s + 7919u)) * float(uGlitchLen)))];
+  gl_FragColor = vec4(col, float(g) / 255.0);
+}`;
+
+// Pass 2, per screen pixel: composite the glyphs of the own row and the rows above and below, top row first, in the
+// order fillText drew them. Neighbour columns count within the atlas padding, so anti-aliased edges meet without seams.
+const OUT_FRAG = `
+uniform sampler2D uCells;
+uniform sampler2D uAtlas;
+uniform vec2 uGrid;
+uniform vec2 uOrigin;
+uniform vec2 uCell;
+uniform float uDpr;
+uniform float uBufH;
+uniform vec2 uTile;
+uniform vec2 uAtlasSize;
+void main() {
+  vec2 p = vec2(gl_FragCoord.x, uBufH - gl_FragCoord.y) / uDpr - uOrigin;
+  int col = int(floor(p.x / uCell.x)), rc = int(floor(p.y / uCell.y)), cols = int(uGrid.x), rows = int(uGrid.y);
+  vec4 o = vec4(0.0);
+  for (int k = -1; k <= 1; k++) {
+    int r = rc + k;
+    if (r < 0 || r >= rows) continue;
+    float ly = (p.y - (float(r) + 0.5) * uCell.y) * uDpr + uTile.y * 0.5;
+    for (int m = -1; m <= 1; m++) {
+      int c = col + m;
+      float lx = (p.x - float(c) * uCell.x) * uDpr + ${PAD}.0;
+      if (c < 0 || c >= cols || lx < 0.0 || lx >= uTile.x) continue;
+      vec4 cell = texelFetch(uCells, ivec2(c, rows - 1 - r), 0);
+      int g = int(cell.a * 255.0 + 0.5);
+      if (g == 0) continue;
+      float a = texture2D(uAtlas, vec2(float(g - 1) * uTile.x + lx, ly) / uAtlasSize).a;
+      o = vec4(cell.rgb * a, a) + o * (1.0 - a);
+    }
+  }
+  gl_FragColor = o;
+}`;
+
+// color="mesh": the plain 3D render, no ASCII.
+const MESH_FRAG = `
+uniform sampler2D uScene;
+uniform vec2 uBuf;
+${SRGB}
+void main() {
+  vec4 s = texture2D(uScene, gl_FragCoord.xy / uBuf);
+  gl_FragColor = s.a > 0.0 ? vec4(toSrgb(s.rgb / s.a) * s.a, s.a) : vec4(0.0);
+}`;
 
 function buildEye(THREE) {
   const M = {
@@ -103,7 +211,7 @@ class EyeAscii extends HTMLElement {
   constructor() {
     super();
     this._mode = 'idle'; this._yaw = 0; this._pitch = 0; this._lid = 0; this._t = 0; this._rotY = 0;
-    this._errT = -10; this._frame = this._frame.bind(this);
+    this._errT = -10; this._seed = 0; this._frame = this._frame.bind(this);
   }
   set mode(v) { this.setAttribute('mode', v); } get mode() { return this._mode; }
   set readout(v) { this.setAttribute('readout', v); }
@@ -121,14 +229,6 @@ class EyeAscii extends HTMLElement {
   }
   connectedCallback() {
     Object.assign(this.style, { display: 'block', position: 'relative', width: this.style.width || '100%', height: this.style.height || '100%', cursor: 'grab', touchAction: 'none' });
-    if (!this._out) {
-      this._out = document.createElement('canvas');
-      Object.assign(this._out.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block' });
-      this.appendChild(this._out);
-      this._ctx = this._out.getContext('2d');
-      this._samp = document.createElement('canvas');
-      this._sctx = this._samp.getContext('2d', { willReadFrequently: true });
-    }
     this._onMove = (e) => {
       this._ptr = { x: e.clientX, y: e.clientY, time: performance.now() };
       if (this._drag) { this._rotY = this._drag.r + (e.clientX - this._drag.x) * 0.01; }
@@ -148,31 +248,100 @@ class EyeAscii extends HTMLElement {
     window.removeEventListener('pointerup', this._onUp);
     this.removeEventListener('pointerdown', this._onDown);
     this._ro && this._ro.disconnect(); this._io && this._io.disconnect();
+    this._teardown();
+  }
+  _fail() {
+    cancelAnimationFrame(this._raf); this._raf = 0;
+    window.dispatchEvent(new Event('visual:fail'));
+  }
+  _teardown() {
+    if (!this._r) return;
+    const R = this._r; this._r = null;
+    this._gpu.forEach((o) => o.dispose());
+    R.domElement.removeEventListener('webglcontextlost', this._onLost);
+    R.dispose(); R.forceContextLoss(); R.domElement.remove();
   }
   async _start() {
     if (!this._r) {
       const THREE = await loadThree();
       if (!this.isConnected || this._r) return;
       this.THREE = THREE;
-      this._r = sharedRenderer(THREE);
-      this._mc = document.createElement('canvas');
-      Object.assign(this._mc.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'none' });
-      this.appendChild(this._mc);
-      this._mctx = this._mc.getContext('2d');
-      const scene = new THREE.Scene(); this._scene = scene;
-      scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1a1a, 1.3));
-      const key = new THREE.DirectionalLight(0xffffff, 2.6); key.position.set(2.5, 3, 4); scene.add(key);
-      const fill = new THREE.DirectionalLight(0xffffff, 0.7); fill.position.set(-3, 1, 2); scene.add(fill);
-      const rimA = new THREE.DirectionalLight(0xff2bd6, 1.6); rimA.position.set(-4, 2, -3); scene.add(rimA);
-      const rimB = new THREE.DirectionalLight(0x00e5ff, 1.1); rimB.position.set(5, 1, -2); scene.add(rimB);
-      this._cam = new THREE.PerspectiveCamera(28, 1.5, 0.01, 50);
-      this._E = buildEye(THREE); scene.add(this._E.root);
-      this._frameCam();
-      document.fonts && document.fonts.load('14px "IBM Plex Mono"').then(() => this._resize());
+      let R;
+      try { R = new THREE.WebGLRenderer({ alpha: true, powerPreference: 'low-power' }); } catch { this._fail(); return; }
+      this._r = R;
+      R.setClearColor(0x000000, 0);
+      R.autoClear = false;
+      Object.assign(R.domElement.style, { position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block' });
+      this._onLost = (e) => { e.preventDefault(); this._fail(); };
+      R.domElement.addEventListener('webglcontextlost', this._onLost);
+      this.appendChild(R.domElement);
+      if (!this._scene) {
+        const scene = new THREE.Scene(); this._scene = scene;
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1a1a, 1.3));
+        const key = new THREE.DirectionalLight(0xffffff, 2.6); key.position.set(2.5, 3, 4); scene.add(key);
+        const fill = new THREE.DirectionalLight(0xffffff, 0.7); fill.position.set(-3, 1, 2); scene.add(fill);
+        const rimA = new THREE.DirectionalLight(0xff2bd6, 1.6); rimA.position.set(-4, 2, -3); scene.add(rimA);
+        const rimB = new THREE.DirectionalLight(0x00e5ff, 1.1); rimB.position.set(5, 1, -2); scene.add(rimB);
+        this._cam = new THREE.PerspectiveCamera(28, 1.5, 0.01, 50);
+        this._E = buildEye(THREE); scene.add(this._E.root);
+        this._frameCam();
+      }
+      // Scene in sRGB storage: linear blending and MSAA, no banding in the darks the ramp cares about.
+      this._rt = new THREE.WebGLRenderTarget(2, 2, { samples: 4, colorSpace: THREE.SRGBColorSpace });
+      this._cells = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false, depthBuffer: false });
+      this._atlasCanvas = document.createElement('canvas');
+      this._atlas = new THREE.CanvasTexture(this._atlasCanvas);
+      Object.assign(this._atlas, { flipY: false, generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+      const ints = (a) => { const out = new Int32Array(32); out.set(a); return out; };
+      this._cellMat = new THREE.ShaderMaterial({
+        vertexShader: VERT, fragmentShader: CELL_FRAG, blending: THREE.NoBlending, depthTest: false, depthWrite: false,
+        uniforms: {
+          uScene: { value: this._rt.texture }, uGrid: { value: new THREE.Vector2(1, 1) },
+          uRamp: { value: new Int32Array(32) }, uRampLen: { value: 2 },
+          uGlitchGlyphs: { value: ints([...GLITCH].map(gid)) }, uGlitchLen: { value: GLITCH.length }, uDot: { value: gid('.') },
+          uPal: { value: PAL }, uChroma: { value: false }, uErr: { value: false },
+          uGlitch: { value: false }, uBands: { value: new Float32Array(18) }, uBandCount: { value: 0 }, uSeed: { value: 0 },
+        },
+      });
+      this._outMat = new THREE.ShaderMaterial({
+        vertexShader: VERT, fragmentShader: OUT_FRAG, blending: THREE.NoBlending, depthTest: false, depthWrite: false,
+        uniforms: {
+          uCells: { value: this._cells.texture }, uAtlas: { value: this._atlas }, uGrid: { value: new THREE.Vector2(1, 1) },
+          uOrigin: { value: new THREE.Vector2() }, uCell: { value: new THREE.Vector2(CW, CH) }, uDpr: { value: 1 }, uBufH: { value: 1 },
+          uTile: { value: new THREE.Vector2(1, 1) }, uAtlasSize: { value: new THREE.Vector2(1, 1) },
+        },
+      });
+      this._meshMat = new THREE.ShaderMaterial({
+        vertexShader: VERT, fragmentShader: MESH_FRAG, blending: THREE.NoBlending, depthTest: false, depthWrite: false,
+        uniforms: { uScene: { value: this._rt.texture }, uBuf: { value: new THREE.Vector2(1, 1) } },
+      });
+      const geo = new THREE.PlaneGeometry(2, 2);
+      this._quad = new THREE.Mesh(geo, this._cellMat); this._quad.frustumCulled = false;
+      this._quadScene = new THREE.Scene(); this._quadScene.add(this._quad);
+      this._quadCam = new THREE.Camera();
+      this._gpu = [this._rt, this._cells, this._atlas, this._cellMat, this._outMat, this._meshMat, geo];
+      this._atlasDpr = 0;
+      document.fonts && document.fonts.load('14px "IBM Plex Mono"').then(() => { this._atlasDpr = 0; this._resize(); });
     }
     this._resize();
     this._last = performance.now();
     if (!this._raf) this._raf = requestAnimationFrame(this._frame);
+  }
+  _buildAtlas(dpr) {
+    const tw = Math.ceil(CW * dpr) + 2 * PAD, th = Math.ceil(TILE_ROWS * CH * dpr);
+    const c = this._atlasCanvas;
+    c.width = GLYPHS.length * tw; c.height = th;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.font = `${14 * dpr}px "IBM Plex Mono", ui-monospace, monospace`;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    GLYPHS.forEach((ch, i) => ctx.fillText(ch, i * tw + PAD, th / 2));
+    // A resized canvas needs a fresh GPU texture.
+    this._atlas.dispose(); this._atlas.needsUpdate = true;
+    const u = this._outMat.uniforms;
+    u.uTile.value.set(tw, th); u.uAtlasSize.value.set(c.width, c.height);
+    this._atlasDpr = dpr;
   }
   _frameCam() {
     if (!this._cam || !this._E) return;
@@ -188,16 +357,17 @@ class EyeAscii extends HTMLElement {
     const sy = this._shiftY || 0;
     cam.position.set(c.x, c.y + sy, c.z + d); cam.lookAt(c.x, c.y + sy, c.z); cam.updateProjectionMatrix();
   }
-  _blit(ctx, w, h) { const [sx, sy, sw, sh] = this._src; ctx.drawImage(this._r.domElement, sx, sy, sw, sh, 0, 0, w, h); }
+  // Re-centres the drone vertically from the rows that hold glyphs (one small readback, not per frame).
   _autoCenter() {
     this._centerAt = -1;
     if (this.getAttribute('framing') === 'eye') return;
-    const cols = this._cols, rows = this._rows;
-    this._sctx.clearRect(0, 0, cols, rows);
-    this._blit(this._sctx, cols, rows);
-    const d = this._sctx.getImageData(0, 0, cols, rows).data;
+    const cols = this._cols, rows = this._rows, d = new Uint8Array(cols * rows * 4);
+    this._r.readRenderTargetPixels(this._cells, 0, 0, cols, rows, d);
     let y0 = -1, y1 = -1;
-    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) if (d[(y * cols + x) * 4 + 3] > 20) { if (y0 < 0) y0 = y; y1 = y; break; }
+    for (let y = 0; y < rows; y++) {
+      const j = (rows - 1 - y) * cols * 4;
+      for (let x = 0; x < cols; x++) if (d[j + x * 4 + 3]) { if (y0 < 0) y0 = y; y1 = y; break; }
+    }
     if (y0 < 0) return;
     const off = (y0 + y1) / 2 - (rows - 1) / 2;
     const perRow = (2 * this._camD * Math.tan((this._cam.fov * Math.PI) / 360)) / rows;
@@ -205,25 +375,32 @@ class EyeAscii extends HTMLElement {
     this._frameCam();
   }
   _resize() {
+    if (!this._r) return;
     const W = this.clientWidth, H = this.clientHeight;
     if (!W || !H) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), R = this._r;
     this._W = W; this._H = H;
-    this._out.width = Math.round(W * dpr); this._out.height = Math.round(H * dpr);
-    this._ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this._cols = Math.max(1, Math.floor(W / CW)); this._rows = Math.max(1, Math.floor(H / CH));
-    this._x0 = (W - this._cols * CW) / 2; this._y0 = (H - this._rows * CH) / 2;
-    this._samp.width = this._cols; this._samp.height = this._rows;
-    if (this._r) {
-      const mesh = this.getAttribute('color') === 'mesh';
-      this._mc.style.display = mesh ? 'block' : 'none';
-      this._out.style.display = mesh ? 'none' : 'block';
-      const pr = Math.min(dpr, 1.5);
-      this._rw = mesh ? Math.round(W * pr) : Math.max(2, Math.round(W / 2.5));
-      this._rh = mesh ? Math.round(H * pr) : Math.max(2, Math.round(H / 2.5));
-      if (mesh) { this._mc.width = this._rw; this._mc.height = this._rh; }
-      this._cam.aspect = W / H; this._frameCam();
-    }
+    const mesh = this.getAttribute('color') === 'mesh', pr = Math.min(dpr, 1.5);
+    this._rw = mesh ? Math.round(W * pr) : Math.max(2, Math.round(W / 2.5));
+    this._rh = mesh ? Math.round(H * pr) : Math.max(2, Math.round(H / 2.5));
+    R.setPixelRatio(dpr); R.setSize(W, H, false);
+    this._rt.setSize(this._rw, this._rh);
+    this._cells.setSize(this._cols, this._rows);
+    if (dpr !== this._atlasDpr) this._buildAtlas(dpr);
+    const buf = R.getDrawingBufferSize(new this.THREE.Vector2());
+    this._cellMat.uniforms.uGrid.value.set(this._cols, this._rows);
+    const u = this._outMat.uniforms;
+    u.uGrid.value.set(this._cols, this._rows);
+    u.uOrigin.value.set((W - this._cols * CW) / 2, (H - this._rows * CH) / 2);
+    u.uDpr.value = buf.y / H; u.uBufH.value = buf.y;
+    this._meshMat.uniforms.uBuf.value.copy(buf);
+    this._cam.aspect = W / H; this._frameCam();
+  }
+  _pass(mat, target) {
+    this._quad.material = mat;
+    this._r.setRenderTarget(target);
+    this._r.render(this._quadScene, this._quadCam);
   }
   _frame(now) {
     this._raf = requestAnimationFrame(this._frame);
@@ -268,16 +445,34 @@ class EyeAscii extends HTMLElement {
     E.root.rotation.y = this._rotY;
     if (this._glitchOn && t > (this._gUntil || 0) && Math.random() < dt / 2.8) this._burst(0.08 + Math.random() * 0.18);
     this._glitching = this._glitchOn && t < (this._gUntil || 0);
-    const R = this._r, gl = R.domElement;
-    if (gl.width < this._rw || gl.height < this._rh) R.setSize(Math.max(gl.width, this._rw), Math.max(gl.height, this._rh), false);
-    R.setViewport(0, 0, this._rw, this._rh); R.setScissor(0, 0, this._rw, this._rh); R.setScissorTest(true);
-    R.clear(); R.render(this._scene, this._cam);
-    this._src = [0, gl.height - this._rh, this._rw, this._rh];
-    if (this.getAttribute('color') === 'mesh') { this._mctx.clearRect(0, 0, this._rw, this._rh); this._blit(this._mctx, this._rw, this._rh); }
+    const R = this._r, mesh = this.getAttribute('color') === 'mesh';
+    R.setRenderTarget(this._rt); R.clear(); R.render(this._scene, this._cam);
     if (this._centerAt == null) this._centerAt = t + 0.6;
-    if (t > this._centerAt && this._centerAt > 0) this._autoCenter();
-    if (this.getAttribute('color') !== 'mesh') this._ascii();
-    else this._mc.style.transform = this._glitching ? `translate(${((Math.random() - 0.5) * 24) | 0}px, 0) skewX(${((Math.random() - 0.5) * 6).toFixed(1)}deg)` : '';
+    const center = t > this._centerAt && this._centerAt > 0;
+    if (!mesh || center) {
+      const u = this._cellMat.uniforms, color = this.getAttribute('color');
+      const ramp = RAMPS[this.getAttribute('ramp')] || RAMPS.classic;
+      u.uRamp.value.fill(0); u.uRamp.value.set([...ramp].map((ch) => (ch === ' ' ? 0 : gid(ch))));
+      u.uRampLen.value = ramp.length;
+      u.uErr.value = mode === 'error';
+      u.uPal.value = mode === 'error' ? PAL_ERR : PAL;
+      u.uChroma.value = color === 'color';
+      u.uGlitch.value = !!this._glitching;
+      const bands = this._glitching ? this._bands.slice(0, 6) : [];
+      bands.forEach((b, i) => u.uBands.value.set([b.y0, b.y1, b.off], i * 3));
+      u.uBandCount.value = bands.length;
+      u.uSeed.value = this._seed = (this._seed + 1) % 16777216;
+      this._pass(this._cellMat, this._cells);
+    }
+    R.setRenderTarget(null); R.clear();
+    if (mesh) {
+      this._pass(this._meshMat, null);
+      R.domElement.style.transform = this._glitching ? `translate(${((Math.random() - 0.5) * 24) | 0}px, 0) skewX(${((Math.random() - 0.5) * 6).toFixed(1)}deg)` : '';
+    } else {
+      R.domElement.style.transform = '';
+      this._pass(this._outMat, null);
+    }
+    if (center) this._autoCenter();
     if (now - (this._ro_t || 0) > 100) {
       this._ro_t = now;
       const id = this.getAttribute('readout'), el = id && document.getElementById(id);
@@ -285,42 +480,6 @@ class EyeAscii extends HTMLElement {
         const f = (v) => v.toFixed(3).replace(/^-0\.000$/, '0.000');
         const y = this._yaw + this._rotY, p = this._pitch;
         el.textContent = `X: ${f(Math.sin(y) * Math.cos(p))}   Y: ${f(-Math.sin(p))}   Z: ${f(Math.cos(y) * Math.cos(p))}`;
-      }
-    }
-  }
-  _ascii() {
-    const cols = this._cols, rows = this._rows, sctx = this._sctx, ctx = this._ctx;
-    sctx.imageSmoothingEnabled = true; sctx.imageSmoothingQuality = 'high';
-    sctx.clearRect(0, 0, cols, rows);
-    this._blit(sctx, cols, rows);
-    const d = sctx.getImageData(0, 0, cols, rows).data;
-    ctx.clearRect(0, 0, this._W, this._H);
-    ctx.font = '14px "IBM Plex Mono", ui-monospace, monospace';
-    ctx.textBaseline = 'middle';
-    const ramp = RAMPS[this.getAttribute('ramp')] || RAMPS.classic, rl = ramp.length - 1;
-    const pal = this._mode === 'error' ? PAL_ERR : PAL;
-    const chroma = this.getAttribute('color') === 'color';
-    let last = '';
-    const G = this._glitching, GL = '01<>/\\|=+*:;$#ABCDEF';
-    for (let y = 0; y < rows; y++) {
-      const py = this._y0 + y * CH + CH / 2;
-      let off = 0;
-      if (G) for (const b of this._bands) if (y >= b.y0 && y < b.y1) { off = b.off; break; }
-      for (let x = 0; x < cols; x++) {
-        const sx = ((x - off) % cols + cols) % cols;
-        const j = (y * cols + sx) * 4, a = d[j + 3];
-        if (!a) continue;
-        let l = Math.min(1, Math.pow((0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2]) / 255, 1.35) * 1.05), ch;
-        if (l < 0.035) { if (a > 30) { ch = '.'; l = 0.1; } else continue; }
-        else ch = ramp[Math.min(rl, 1 + Math.round(l * (rl - 1)))];
-        let st;
-        if (chroma) {
-          const m = Math.max(d[j], d[j + 1], d[j + 2], 1), q = (90 + 165 * l) / m;
-          st = this._mode === 'error' ? `rgb(${(110 + 145 * l) | 0},${(d[j + 1] * q * 0.45) | 0},${(d[j + 2] * q * 0.4) | 0})` : `rgb(${(d[j] * q) | 0},${(d[j + 1] * q) | 0},${(d[j + 2] * q) | 0})`;
-        } else st = pal[Math.min(15, (l * 16) | 0)];
-        if (st !== last) { ctx.fillStyle = st; last = st; }
-        if (G && Math.random() < 0.04) ch = GL[(Math.random() * GL.length) | 0];
-        ctx.fillText(ch, this._x0 + x * CW, py);
       }
     }
   }
