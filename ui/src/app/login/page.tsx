@@ -46,7 +46,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <Panel
         path="~/identity/auth"
         rd={rd}
-        step={refresh ? t("login.refresh.label") : t("login.label")}
+        step={refresh ? t("login.refresh.label") : undefined}
         title={refresh ? t("login.refresh.title") : t("login.title")}
         desc={refresh ? t("login.refresh.desc") : t("login.desc")}
       >

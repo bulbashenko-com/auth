@@ -46,11 +46,6 @@ export async function Shell({
         )}
       </div>
       <footer className="bar bottom">
-        <div className="status">
-          <span className="dot" aria-hidden="true" />
-          <span className="on">{t("footer.online")}</span>
-          <span className="off">{t("footer.encrypted")}</span>
-        </div>
         <span>© {new Date().getFullYear()} BULBASHENKO.COM</span>
       </footer>
       <div className="scanlines" aria-hidden="true" />
@@ -68,7 +63,7 @@ export async function Panel({
   children,
 }: {
   path: string
-  step: string
+  step?: string
   title: string
   desc?: string
   rd?: string
@@ -83,17 +78,18 @@ export async function Panel({
       </div>
       <div className="content">
         <div className="heading">
-          <div className="step">
-            <span className="dot" aria-hidden="true" />
-            <span>{step}</span>
-          </div>
+          {step && (
+            <div className="step">
+              <span className="dot" aria-hidden="true" />
+              <span>{step}</span>
+            </div>
+          )}
           <h1 className="title">{title}</h1>
           {desc && <p className="desc">{desc}</p>}
         </div>
         {children}
       </div>
       <div className="foot-row">
-        <span>{t("footer.secure")}</span>
         <span className="rule" aria-hidden="true" />
         <span>{t("footer.stack")}</span>
       </div>

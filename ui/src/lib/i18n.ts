@@ -9,12 +9,8 @@ export const isLocale = (value: unknown): value is Locale => LOCALES.includes(va
 
 const ru = {
   "brand.section": "IDENTITY / SSO",
-  "footer.online": "SYSTEM ONLINE",
-  "footer.encrypted": "/ ENCRYPTED CONNECTION",
-  "footer.secure": "[ SECURE BY DESIGN ]",
   "footer.stack": "ORY / OIDC",
 
-  "login.label": "ACCESS PORTAL / 01",
   "login.title": "Вход",
   "login.desc": "Один аккаунт для всех сервисов bulbashenko.com.\nРегистрации нет — аккаунт выдаёт администратор.",
   "login.passkey": "[ ВОЙТИ С ПАСКЛЮЧОМ ]",
@@ -123,12 +119,8 @@ export type Key = keyof typeof ru
 
 const en: Record<Key, string> = {
   "brand.section": "IDENTITY / SSO",
-  "footer.online": "SYSTEM ONLINE",
-  "footer.encrypted": "/ ENCRYPTED CONNECTION",
-  "footer.secure": "[ SECURE BY DESIGN ]",
   "footer.stack": "ORY / OIDC",
 
-  "login.label": "ACCESS PORTAL / 01",
   "login.title": "Sign in",
   "login.desc": "One account for every bulbashenko.com service.\nNo sign-up: accounts are issued by the admin.",
   "login.passkey": "[ SIGN IN WITH PASSKEY ]",

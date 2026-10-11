@@ -88,9 +88,6 @@ a:hover { color: var(--accent-hi); }
 .langs a { color: var(--g3); }
 .langs a[aria-current="true"] { color: var(--g1); }
 
-.status { display: flex; gap: 8px; align-items: center; }
-.status .dot { width: 5px; height: 5px; background: var(--accent); }
-.status .on { color: var(--g2); }
 
 .main { position: relative; z-index: 1; flex: 1; display: flex; min-height: 0; }
 
@@ -145,7 +142,7 @@ a:hover { color: var(--accent-hi); }
   .bar { padding: 0 16px; }
   .bar.top { height: 56px; }
   .brand .name { font-size: 20px; }
-  .brand .sep, .brand .section, .status .off { display: none; }
+  .brand .sep, .brand .section { display: none; }
   .left { padding: 24px 16px; }
   .title { font-size: 44px; }
 }
