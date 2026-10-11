@@ -15,6 +15,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        # Image users are named (ory/nonroot); the kubelet needs a numeric id to verify non-root.
+        runAsUser: 10000
+        runAsGroup: 10000
         seccompProfile: { type: RuntimeDefault }
       initContainers:
         - name: migrate
@@ -104,6 +107,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        # Image users are named (ory/nonroot); the kubelet needs a numeric id to verify non-root.
+        runAsUser: 65532
+        runAsGroup: 65532
         seccompProfile: { type: RuntimeDefault }
       initContainers:
         - name: migrate
@@ -173,6 +179,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        # Image users are named (ory/nonroot); the kubelet needs a numeric id to verify non-root.
+        runAsUser: 10000
+        runAsGroup: 10000
         seccompProfile: { type: RuntimeDefault }
       initContainers:
         - name: migrate
@@ -240,6 +249,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        # Image users are named (ory/nonroot); the kubelet needs a numeric id to verify non-root.
+        runAsUser: 10000
+        runAsGroup: 10000
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: oathkeeper
