@@ -1,0 +1,277 @@
+# Ory services. Configs come from ConfigMaps generated from ory/ (see the root kustomization.yaml);
+# DSNs and secrets from the Secret `auth`, which the deploying repo (bulbashenko-com/infra) provides.
+# Service names match the compose stack, so the configs' internal URLs (kratos:4433, hydra:4445, keto:4466) still work.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kratos
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: kratos }
+  template:
+    metadata:
+      labels: { app: kratos }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        - name: migrate
+          image: oryd/kratos:v26.2.0
+          args: ["migrate", "sql", "-e", "--yes", "-c", "/etc/config/kratos/kratos.yml"]
+          env:
+            - { name: SQA_OPT_OUT, value: "true" }
+            - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_DSN } } }
+          volumeMounts:
+            - { name: config, mountPath: /etc/config/kratos }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      containers:
+        - name: kratos
+          image: oryd/kratos:v26.2.0
+          args: ["serve", "-c", "/etc/config/kratos/kratos.yml", "--watch-courier"]
+          env:
+            - { name: SQA_OPT_OUT, value: "true" }
+            - { name: LOG_LEVEL, value: info }
+            - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_DSN } } }
+            - { name: SECRETS_COOKIE, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_SECRETS_COOKIE } } }
+            - { name: SECRETS_DEFAULT, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_SECRETS_DEFAULT } } }
+            - { name: SECRETS_CIPHER, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_SECRETS_CIPHER } } }
+            - { name: SECRETS_PAGINATION, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_SECRETS_PAGINATION } } }
+            - { name: COURIER_SMTP_CONNECTION_URI, valueFrom: { secretKeyRef: { name: auth, key: SMTP_CONNECTION_URI } } }
+            - { name: COURIER_SMTP_FROM_ADDRESS, valueFrom: { secretKeyRef: { name: auth, key: SMTP_SENDER } } }
+          ports:
+            - { name: public, containerPort: 4433 }
+            - { name: admin, containerPort: 4434 }
+          readinessProbe:
+            httpGet: { path: /admin/health/ready, port: admin }
+          livenessProbe:
+            httpGet: { path: /admin/health/alive, port: admin }
+          resources:
+            requests: { cpu: 10m, memory: 48Mi }
+            limits: { memory: 256Mi }
+          volumeMounts:
+            - { name: config, mountPath: /etc/config/kratos }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      volumes:
+        - name: config
+          projected:
+            sources:
+              - configMap: { name: kratos-config }
+              - configMap:
+                  name: kratos-courier-templates
+                  items:
+                    - { key: recovery_code.invalid.email.body.gotmpl, path: courier-templates/recovery_code/invalid/email.body.gotmpl }
+                    - { key: recovery_code.invalid.email.body.plaintext.gotmpl, path: courier-templates/recovery_code/invalid/email.body.plaintext.gotmpl }
+                    - { key: recovery_code.invalid.email.subject.gotmpl, path: courier-templates/recovery_code/invalid/email.subject.gotmpl }
+                    - { key: recovery_code.valid.email.body.gotmpl, path: courier-templates/recovery_code/valid/email.body.gotmpl }
+                    - { key: recovery_code.valid.email.body.plaintext.gotmpl, path: courier-templates/recovery_code/valid/email.body.plaintext.gotmpl }
+                    - { key: recovery_code.valid.email.subject.gotmpl, path: courier-templates/recovery_code/valid/email.subject.gotmpl }
+                    - { key: verification_code.invalid.email.body.gotmpl, path: courier-templates/verification_code/invalid/email.body.gotmpl }
+                    - { key: verification_code.invalid.email.body.plaintext.gotmpl, path: courier-templates/verification_code/invalid/email.body.plaintext.gotmpl }
+                    - { key: verification_code.invalid.email.subject.gotmpl, path: courier-templates/verification_code/invalid/email.subject.gotmpl }
+                    - { key: verification_code.valid.email.body.gotmpl, path: courier-templates/verification_code/valid/email.body.gotmpl }
+                    - { key: verification_code.valid.email.body.plaintext.gotmpl, path: courier-templates/verification_code/valid/email.body.plaintext.gotmpl }
+                    - { key: verification_code.valid.email.subject.gotmpl, path: courier-templates/verification_code/valid/email.subject.gotmpl }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kratos
+spec:
+  selector: { app: kratos }
+  ports:
+    - { name: public, port: 4433, targetPort: public }
+    - { name: admin, port: 4434, targetPort: admin }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hydra
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: hydra }
+  template:
+    metadata:
+      labels: { app: hydra }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        - name: migrate
+          image: oryd/hydra:v26.2.0
+          args: ["migrate", "sql", "up", "-e", "--yes", "-c", "/etc/config/hydra/hydra.yml"]
+          env:
+            - { name: SQA_OPT_OUT, value: "true" }
+            - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: HYDRA_DSN } } }
+          volumeMounts:
+            - { name: config, mountPath: /etc/config/hydra }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      containers:
+        - name: hydra
+          image: oryd/hydra:v26.2.0
+          args: ["serve", "all", "-c", "/etc/config/hydra/hydra.yml"]
+          env:
+            - { name: SQA_OPT_OUT, value: "true" }
+            - { name: LOG_LEVEL, value: info }
+            - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: HYDRA_DSN } } }
+            - { name: SECRETS_SYSTEM, valueFrom: { secretKeyRef: { name: auth, key: HYDRA_SECRETS_SYSTEM } } }
+            - { name: SECRETS_COOKIE, valueFrom: { secretKeyRef: { name: auth, key: HYDRA_SECRETS_COOKIE } } }
+            - { name: SECRETS_PAGINATION, valueFrom: { secretKeyRef: { name: auth, key: HYDRA_SECRETS_PAGINATION } } }
+          ports:
+            - { name: public, containerPort: 4444 }
+            - { name: admin, containerPort: 4445 }
+          readinessProbe:
+            httpGet: { path: /health/ready, port: admin }
+          livenessProbe:
+            httpGet: { path: /health/alive, port: admin }
+          resources:
+            requests: { cpu: 10m, memory: 48Mi }
+            limits: { memory: 256Mi }
+          volumeMounts:
+            - { name: config, mountPath: /etc/config/hydra }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      volumes:
+        - name: config
+          configMap: { name: hydra-config }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hydra
+spec:
+  selector: { app: hydra }
+  ports:
+    - { name: public, port: 4444, targetPort: public }
+    - { name: admin, port: 4445, targetPort: admin }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keto
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: keto }
+  template:
+    metadata:
+      labels: { app: keto }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        - name: migrate
+          image: oryd/keto:v26.2.0
+          args: ["migrate", "up", "--yes", "-c", "/etc/config/keto/keto.yml"]
+          env:
+            - { name: SQA_OPT_OUT, value: "true" }
+            - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: KETO_DSN } } }
+          volumeMounts:
+            - { name: config, mountPath: /etc/config/keto }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      containers:
+        - name: keto
+          image: oryd/keto:v26.2.0
+          args: ["serve", "-c", "/etc/config/keto/keto.yml"]
+          env:
+            - { name: SQA_OPT_OUT, value: "true" }
+            - { name: LOG_LEVEL, value: info }
+            - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: KETO_DSN } } }
+          ports:
+            - { name: read, containerPort: 4466 }
+            - { name: write, containerPort: 4467 }
+          readinessProbe:
+            httpGet: { path: /health/ready, port: read }
+          livenessProbe:
+            httpGet: { path: /health/alive, port: read }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 192Mi }
+          volumeMounts:
+            - { name: config, mountPath: /etc/config/keto }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      volumes:
+        - name: config
+          configMap: { name: keto-config }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keto
+spec:
+  selector: { app: keto }
+  ports:
+    - { name: read, port: 4466, targetPort: read }
+    - { name: write, port: 4467, targetPort: write }
+---
+# Traefik forward-auth for admin UIs: GET http://oathkeeper.<ns>.svc:4456/decisions. No database.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oathkeeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: oathkeeper }
+  template:
+    metadata:
+      labels: { app: oathkeeper }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: oathkeeper
+          image: oryd/oathkeeper:v26.2.0
+          args: ["serve", "-c", "/etc/config/oathkeeper/oathkeeper.yml"]
+          env:
+            - { name: SQA_OPT_OUT, value: "true" }
+            - { name: LOG_LEVEL, value: info }
+          ports:
+            - { name: api, containerPort: 4456 }
+          readinessProbe:
+            httpGet: { path: /health/ready, port: api }
+          livenessProbe:
+            httpGet: { path: /health/alive, port: api }
+          resources:
+            requests: { cpu: 10m, memory: 24Mi }
+            limits: { memory: 128Mi }
+          volumeMounts:
+            - { name: config, mountPath: /etc/config/oathkeeper }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      volumes:
+        - name: config
+          configMap: { name: oathkeeper-config }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oathkeeper
+spec:
+  selector: { app: oathkeeper }
+  ports:
+    - { name: api, port: 4456, targetPort: api }

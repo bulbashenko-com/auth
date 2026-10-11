@@ -1,0 +1,93 @@
+# Login, settings, consent and the admin page (users.int). Image built by .github/workflows/image.yml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sso-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: sso-ui }
+  template:
+    metadata:
+      labels: { app: sso-ui }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: sso-ui
+          image: ghcr.io/bulbashenko-com/auth-ui:latest
+          env:
+            - { name: PUBLIC_URL, value: "https://auth.bulbashenko.com" }
+            - { name: ADMIN_HOST, value: "users.int.bulbashenko.com" }
+            - { name: KRATOS_PUBLIC_URL, value: "http://kratos:4433" }
+            - { name: KRATOS_ADMIN_URL, value: "http://kratos:4434" }
+            - { name: HYDRA_ADMIN_URL, value: "http://hydra:4445" }
+            - { name: KETO_READ_URL, value: "http://keto:4466" }
+            - { name: KETO_WRITE_URL, value: "http://keto:4467" }
+          ports:
+            - { name: http, containerPort: 3000 }
+          readinessProbe:
+            httpGet: { path: /api/health, port: http }
+          livenessProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 20m, memory: 96Mi }
+            limits: { memory: 384Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: cache, mountPath: /app/.next/cache }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: cache, emptyDir: {} }
+        - { name: tmp, emptyDir: {} }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sso-ui
+spec:
+  selector: { app: sso-ui }
+  ports:
+    - { name: http, port: 3000, targetPort: http }
+---
+# Creates or updates the OIDC clients from ory/hydra/clients/*.json. Re-runs when the clients change
+# (ConfigMap hash in the pod spec) thanks to Flux's force annotation.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hydra-clients
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: sync
+          image: ghcr.io/bulbashenko-com/auth-ui:latest
+          command: ["node", "scripts/sync-clients.mjs", "/app/clients"]
+          env:
+            - { name: HYDRA_ADMIN_URL, value: "http://hydra:4445" }
+            - { name: OIDC_SITE_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_SITE_CLIENT_SECRET } } }
+            - { name: OIDC_COOLIFY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_COOLIFY_CLIENT_SECRET } } }
+            - { name: OIDC_HEADSCALE_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_HEADSCALE_CLIENT_SECRET } } }
+          resources:
+            requests: { cpu: 10m, memory: 48Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: clients, mountPath: /app/clients }
+      volumes:
+        - name: clients
+          configMap: { name: hydra-clients }
