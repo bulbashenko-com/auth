@@ -3,6 +3,14 @@
 # and the auth-ui image tag (same commit as this repo).
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# Ownership labels on pods (infra README: Labels). Flux commonMetadata labels the objects but not their pod
+# templates; selectors are left alone so existing Deployments stay valid.
+labels:
+  - pairs:
+      bulbashenko.com/layer: app
+      bulbashenko.com/app: auth
+    includeSelectors: false
+    includeTemplates: true
 resources:
   - deploy/k8s/ory.yaml
   - deploy/k8s/ui.yaml
