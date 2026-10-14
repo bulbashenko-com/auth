@@ -40,7 +40,7 @@ Groups decide access. Each OIDC client names one group in `metadata.required_gro
 
 | Group | Grants |
 |---|---|
-| `infra-admins` | Mesh admin UIs (forward-auth), Coolify, the admin page |
+| `infra-admins` | Mesh admin UIs (forward-auth), Grafana, Flux web UI, the admin page |
 | `site-admins` | The bulbashenko.com admin panel |
 | `mail-users` | Mail clients and the Stalwart web UI |
 | `vpn-users` | Joining the VPN mesh (Headscale) |
@@ -72,7 +72,7 @@ The deploying side provides the namespace, the image tag and a Secret `auth` wit
    | `KRATOS_CIPHER_SECRET` | exactly 32 characters: `openssl rand -hex 16` |
    | `SMTP_CONNECTION_URI` | `smtps://noreply%40example.com:<url-encoded password>@host.docker.internal:465/?server_name=mail.example.com` |
    | `SMTP_SENDER` | `noreply@example.com` |
-   | `OIDC_SITE_CLIENT_SECRET`, `OIDC_COOLIFY_CLIENT_SECRET`, `OIDC_HEADSCALE_CLIENT_SECRET` | `scripts/new-client-secret.sh`; the app gets the same value |
+   | `OIDC_SITE_CLIENT_SECRET`, `OIDC_HEADSCALE_CLIENT_SECRET`, `OIDC_FLUXWEB_CLIENT_SECRET`, `OIDC_GRAFANA_CLIENT_SECRET` | `scripts/new-client-secret.sh`; the app gets the same value |
 
    Optional: `AUTH_LOG_LEVEL` (`info`), `AUTH_RATE_LIMIT_PER_CLIENT` (10 per minute), `AUTH_RATE_LIMIT_TOTAL` (120 per minute).
    For another domain, change the domains in `ory/*/*.yml`, `ory/hydra/clients/` and the defaults of `AUTH_HOST`, `AUTH_PUBLIC_URL` and `AUTH_ADMIN_HOST`.

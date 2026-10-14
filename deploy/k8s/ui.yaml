@@ -84,7 +84,6 @@ spec:
           env:
             - { name: HYDRA_ADMIN_URL, value: "http://hydra:4445" }
             - { name: OIDC_SITE_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_SITE_CLIENT_SECRET } } }
-            - { name: OIDC_COOLIFY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_COOLIFY_CLIENT_SECRET } } }
             - { name: OIDC_HEADSCALE_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_HEADSCALE_CLIENT_SECRET } } }
             - { name: OIDC_FLUXWEB_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_FLUXWEB_CLIENT_SECRET } } }
             - { name: OIDC_GRAFANA_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: auth, key: OIDC_GRAFANA_CLIENT_SECRET } } }

@@ -32,7 +32,6 @@ configMapGenerator:
   - name: hydra-clients
     files:
       - ory/hydra/clients/bulbashenko-site.json
-      - ory/hydra/clients/coolify.json
       - ory/hydra/clients/flux-web.json
       - ory/hydra/clients/grafana.json
       - ory/hydra/clients/headscale.json
