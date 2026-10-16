@@ -1,18 +1,18 @@
 # Next.js standalone server for auth.bulbashenko.com. Also carries the admin scripts (scripts/*.mjs), which run
 # with `docker compose run` or as the one-shot `hydra-clients` service.
-FROM node:24.21.0-alpine AS deps
+FROM node:24.22.0-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:24.21.0-alpine AS build
+FROM node:24.22.0-alpine AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:24.21.0-alpine AS runtime
+FROM node:24.22.0-alpine AS runtime
 LABEL org.opencontainers.image.title="auth.bulbashenko.com UI" \
       org.opencontainers.image.source="https://github.com/bulbashenko-com/auth" \
       org.opencontainers.image.licenses="MIT"
