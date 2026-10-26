@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test"
+import { AUTH, DOMAIN, DOMAIN_RE, USERS } from "./env"
 import { signIn, twoFactorPerson } from "./fixtures"
 
-const USERS = "https://users.int.bulbashenko.test/"
 
 test("the admin page is not served on the public host", async ({ page }) => {
-  const response = await page.goto("https://auth.bulbashenko.test/admin")
+  const response = await page.goto(`${AUTH}/admin`)
   expect(response?.status()).toBe(404)
 })
 
@@ -21,13 +21,13 @@ test("an infra admin creates a person and gets a one-time recovery link", async 
   const admin = await twoFactorPerson(page, ["infra-admins"])
   await page.goto(USERS)
   await signIn(page, admin)
-  await expect(page).toHaveURL(/users\.int\.bulbashenko\.test\/admin/)
+  await expect(page).toHaveURL(new RegExp(`users\\.int\\.${DOMAIN_RE}/admin`))
   await expect(page.getByRole("heading", { name: "Пользователи" })).toBeVisible()
   await expect(page.getByRole("link", { name: admin.username })).toBeVisible()
 
   const username = `new${Date.now().toString(36)}`
   await page.locator("#a-username").fill(username)
-  await page.locator("#a-email").fill(`${username}@bulbashenko.test`)
+  await page.locator("#a-email").fill(`${username}@${DOMAIN}`)
   await page.getByRole("button", { name: /СОЗДАТЬ/ }).click()
   await expect(page.getByText(/\/recovery\?flow=/)).toBeVisible()
 

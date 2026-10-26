@@ -1,6 +1,6 @@
-# Builds the UI image (also used for the hydra-clients Job) for the Kubernetes deployment, once `test`
-# passed on a push to main, then asks bulbashenko-com/infra for the production deploy PR (the owner merges it).
-# Tag = full commit SHA: bulbashenko-com/infra pins the same SHA for the configs and the image.
+# Builds the UI image (also used for the hydra-clients Job) and the e2e image (staging runs the suite against itself,
+# deploy/staging/e2e.yaml) once `test` passed on a push to main, then asks bulbashenko-com/infra to pin the commit
+# (staging at once, production with the release). Tag = full commit SHA: infra pins the same SHA for configs and images.
 name: image
 
 on:
@@ -48,9 +48,35 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Opens or refreshes the production deploy PR deploy/auth in bulbashenko-com/infra.
-  promote:
+  e2e:
     needs: ui
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.ui.outputs.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: e2e
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/auth-e2e:${{ needs.ui.outputs.sha }}
+            ghcr.io/${{ github.repository_owner }}/auth-e2e:main
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ needs.ui.outputs.sha }}
+          cache-from: type=gha,scope=e2e
+          cache-to: type=gha,mode=max,scope=e2e
+
+  # Pins the commit in bulbashenko-com/infra (dev): staging deploys it and runs e2e; production gets it with the release.
+  promote:
+    needs: [ui, e2e]
     if: github.ref == 'refs/heads/main'
     uses: bulbashenko-com/infra/.github/workflows/request-promote.yml@main
     with:

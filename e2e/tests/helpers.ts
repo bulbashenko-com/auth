@@ -1,16 +1,11 @@
 import { createHash, randomBytes } from "node:crypto"
-import { readFileSync } from "node:fs"
 import { request as httpsRequest } from "node:https"
 import { expect, type Page } from "@playwright/test"
 import { authenticator } from "otplib"
 
-/** Admin APIs, published on loopback by e2e/compose.test.yml only. */
-const KRATOS_ADMIN = "http://127.0.0.1:4434"
-const KETO_WRITE = "http://127.0.0.1:4467"
-const MAILPIT = "http://127.0.0.1:8025"
-export const AUTH = "https://auth.bulbashenko.test"
-export const APP_CALLBACK = "https://app.bulbashenko.test/callback"
-const CA = readFileSync(new URL("../certs/tls.crt", import.meta.url))
+import { APP_CALLBACK, AUTH, CA, DOMAIN, EDGE, KETO_WRITE, KRATOS_ADMIN, MAILPIT } from "./env"
+
+export { APP_CALLBACK, AUTH }
 
 export interface Person {
   id: string
@@ -33,7 +28,7 @@ async function json(url: string, method: string, body?: unknown) {
 /** A person with a password (no second factor yet) and the given groups. */
 export async function createPerson(groups: string[], prefix = "u"): Promise<Person> {
   const username = `${prefix}${Date.now().toString(36)}${randomBytes(2).toString("hex")}`
-  const email = `${username}@bulbashenko.test`
+  const email = `${username}@${DOMAIN}`
   const password = `Pw-${randomBytes(12).toString("hex")}`
   const identity = await json(`${KRATOS_ADMIN}/admin/identities`, "POST", {
     schema_id: "person",
@@ -114,7 +109,7 @@ export function pkce() {
 
 /**
  * Runs an authorization-code request in the browser and returns the redirect back to the app (code or error).
- * The app is a stand-in (traefik/whoami on app.bulbashenko.test).
+ * The app is a stand-in (traefik/whoami on app.DOMAIN).
  */
 export async function authorize(page: Page, clientId: string, scope: string, challenge: string) {
   const query = new URLSearchParams({
@@ -134,20 +129,20 @@ export async function authorize(page: Page, clientId: string, scope: string, cha
   return { callback }
 }
 
-/** Calls the public token endpoint like an app would (HTTPS to 127.0.0.1 with the test certificate). */
+/** Calls the public token endpoint like an app would (HTTPS to EDGE, with the test certificate on the test stack). */
 export function tokenRequest(form: Record<string, string>, basic?: [string, string]): Promise<{ status: number; body: any }> {
   const body = new URLSearchParams(form).toString()
   return new Promise((resolve, reject) => {
     const req = httpsRequest(
       {
-        host: "127.0.0.1",
+        host: EDGE,
         port: 443,
         path: "/oauth2/token",
         method: "POST",
-        servername: "auth.bulbashenko.test",
+        servername: `auth.${DOMAIN}`,
         ca: CA,
         headers: {
-          host: "auth.bulbashenko.test",
+          host: `auth.${DOMAIN}`,
           "content-type": "application/x-www-form-urlencoded",
           "content-length": Buffer.byteLength(body),
           ...(basic ? { authorization: `Basic ${Buffer.from(`${basic[0]}:${basic[1]}`).toString("base64")}` } : {}),

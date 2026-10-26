@@ -1,0 +1,64 @@
+# The e2e suite (e2e/, image auth-e2e built from the same commit) against this staging stack, once per version:
+# `force` recreates the Job whenever its image tag changes. infra waits for it (Flux health check), so a red run
+# marks the staging deploy failed and blocks the release (infra .github/workflows/staging-gate.yml).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        # pwuser in the Playwright image.
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        # Start once the stack this version brought up answers, clients included.
+        - name: wait
+          image: ghcr.io/bulbashenko-com/auth-e2e:latest
+          command:
+            - node
+            - -e
+            - |
+              const urls = ["http://kratos:4434/admin/health/ready", "http://hydra:4445/health/ready",
+                "http://keto:4466/health/ready", "http://sso-ui:3000/api/health", "http://hydra:4445/admin/clients/e2e"]
+              const ok = async (u) => { try { return (await fetch(u)).ok } catch { return false } }
+              for (;;) {
+                const down = []
+                for (const u of urls) if (!(await ok(u))) down.push(u)
+                if (!down.length) break
+                console.log("waiting for", down.join(" "))
+                await new Promise((r) => setTimeout(r, 5000))
+              }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+          securityContext: &hardened
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      containers:
+        - name: e2e
+          image: ghcr.io/bulbashenko-com/auth-e2e:latest
+          env:
+            - { name: E2E_DOMAIN, value: bulbashenko.dev }
+            - { name: E2E_EDGE, value: traefik.kube-system.svc.cluster.local }
+            - { name: E2E_TEST_CERT, value: "0" }
+            - { name: E2E_KRATOS_ADMIN, value: "http://kratos:4434" }
+            - { name: E2E_KETO_WRITE, value: "http://keto:4467" }
+            - { name: E2E_MAILPIT, value: "http://mailpit:8025" }
+          resources:
+            requests: { cpu: 200m, memory: 512Mi }
+            limits: { memory: 1536Mi }
+          securityContext: *hardened
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+            - { name: shm, mountPath: /dev/shm }
+      volumes:
+        - { name: tmp, emptyDir: {} }
+        - { name: shm, emptyDir: { medium: Memory, sizeLimit: 512Mi } }

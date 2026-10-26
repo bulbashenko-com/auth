@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test"
+import { DOMAIN_RE, GARAGE } from "./env"
 import { signIn, twoFactorPerson } from "./fixtures"
 import { setGroups } from "./helpers"
 
-const GARAGE = "https://garage.int.bulbashenko.test/"
 
 test("mesh admin UIs need a two-factor session in infra-admins", async ({ page }) => {
   test.setTimeout(120_000)
@@ -10,7 +10,7 @@ test("mesh admin UIs need a two-factor session in infra-admins", async ({ page }
 
   // Anonymous: sent to the login page with a way back.
   await page.goto(GARAGE)
-  await expect(page).toHaveURL(/auth\.bulbashenko\.test\/login/)
+  await expect(page).toHaveURL(new RegExp(`auth\\.${DOMAIN_RE}/login`))
 
   // Signed in, but not an infra admin: back at the app, which is forbidden.
   await signIn(page, person)
@@ -28,6 +28,6 @@ test("a forged identity header does not get past forward-auth", async ({ browser
   const context = await browser.newContext({ extraHTTPHeaders: { "Remote-User": "admin" } })
   const page = await context.newPage()
   await page.goto(GARAGE)
-  await expect(page).toHaveURL(/auth\.bulbashenko\.test\/login/)
+  await expect(page).toHaveURL(new RegExp(`auth\\.${DOMAIN_RE}/login`))
   await context.close()
 })

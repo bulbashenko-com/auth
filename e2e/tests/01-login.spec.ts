@@ -1,11 +1,12 @@
 import { expect, test } from "@playwright/test"
+import { DOMAIN } from "./env"
 import { createPerson, enrolTotp, freshTotp, passwordStep, totpStep } from "./helpers"
 
 test("the login page has the design's structure and no third-party requests", async ({ page }) => {
   const foreign: string[] = []
   page.on("request", (r) => {
     const host = new URL(r.url()).hostname
-    if (!host.endsWith("bulbashenko.test") && !r.url().startsWith("data:")) foreign.push(r.url())
+    if (!host.endsWith(DOMAIN) && !r.url().startsWith("data:")) foreign.push(r.url())
   })
   await page.goto("/login")
   await expect(page).toHaveURL(/\/login\?flow=/)
