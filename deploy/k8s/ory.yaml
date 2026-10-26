@@ -1,5 +1,6 @@
 # Ory services. Configs come from ConfigMaps generated from ory/ (see the root kustomization.yaml);
-# DSNs and secrets from the Secret `auth`, which the deploying repo (bulbashenko-com/infra) provides.
+# DSNs and secrets from the Secret `auth`, which the deploying repo (bulbashenko-com/infra) provides, and the
+# ConfigMap `internal-ca` (the CA of the Postgres server certificate, mounted at /etc/internal-ca).
 # Service names match the compose stack, so the configs' internal URLs (kratos:4433, hydra:4445, keto:4466) still work.
 apiVersion: apps/v1
 kind: Deployment
@@ -28,6 +29,7 @@ spec:
             - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_DSN } } }
           volumeMounts:
             - { name: config, mountPath: /etc/config/kratos }
+            - { name: internal-ca, mountPath: /etc/internal-ca, readOnly: true }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -58,11 +60,15 @@ spec:
             limits: { memory: 256Mi }
           volumeMounts:
             - { name: config, mountPath: /etc/config/kratos }
+            - { name: internal-ca, mountPath: /etc/internal-ca, readOnly: true }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: [ALL] }
       volumes:
+        # Our CA for verify-full to Postgres (sslrootcert in the DSN); trust-manager puts it in every namespace.
+        - name: internal-ca
+          configMap: { name: internal-ca }
         - name: config
           projected:
             sources:
@@ -120,6 +126,7 @@ spec:
             - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: HYDRA_DSN } } }
           volumeMounts:
             - { name: config, mountPath: /etc/config/hydra }
+            - { name: internal-ca, mountPath: /etc/internal-ca, readOnly: true }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -147,11 +154,15 @@ spec:
             limits: { memory: 256Mi }
           volumeMounts:
             - { name: config, mountPath: /etc/config/hydra }
+            - { name: internal-ca, mountPath: /etc/internal-ca, readOnly: true }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: [ALL] }
       volumes:
+        # Our CA for verify-full to Postgres (sslrootcert in the DSN); trust-manager puts it in every namespace.
+        - name: internal-ca
+          configMap: { name: internal-ca }
         - name: config
           configMap: { name: hydra-config }
 ---
@@ -192,6 +203,7 @@ spec:
             - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: KETO_DSN } } }
           volumeMounts:
             - { name: config, mountPath: /etc/config/keto }
+            - { name: internal-ca, mountPath: /etc/internal-ca, readOnly: true }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -216,11 +228,15 @@ spec:
             limits: { memory: 192Mi }
           volumeMounts:
             - { name: config, mountPath: /etc/config/keto }
+            - { name: internal-ca, mountPath: /etc/internal-ca, readOnly: true }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: [ALL] }
       volumes:
+        # Our CA for verify-full to Postgres (sslrootcert in the DSN); trust-manager puts it in every namespace.
+        - name: internal-ca
+          configMap: { name: internal-ca }
         - name: config
           configMap: { name: keto-config }
 ---
