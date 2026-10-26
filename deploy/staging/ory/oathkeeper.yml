@@ -1,0 +1,9 @@
+# Staging overrides of ory/oathkeeper/oathkeeper.yml: rules for bulbashenko.dev, sign-in on auth.bulbashenko.dev.
+access_rules:
+  repositories:
+    - file:///etc/config/staging/rules.yml
+errors:
+  handlers:
+    redirect:
+      config:
+        to: https://auth.bulbashenko.dev/login

@@ -1,0 +1,30 @@
+# Staging-only routes and the access middleware the staging routes use.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: staging-extras
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`mailpit.int.bulbashenko.dev`)
+      middlewares: [{ name: staging-access }]
+      services: [{ name: mailpit, port: 8025 }]
+    - match: Host(`garage.int.bulbashenko.dev`)
+      middlewares: [{ name: staging-access }, { name: forward-auth }]
+      services: [{ name: whoami, port: 8080 }]
+    - match: Host(`app.bulbashenko.dev`)
+      middlewares: [{ name: staging-access }]
+      services: [{ name: whoami, port: 8080 }]
+  tls: {}
+---
+# The mesh (as kube-system/mesh-only) plus the pod network, so the e2e Job can reach staging through Traefik.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: staging-access
+spec:
+  ipAllowList:
+    sourceRange:
+      - 100.64.0.0/10
+      - fd7a:115c:a1e0::/48
+      - 10.42.0.0/16

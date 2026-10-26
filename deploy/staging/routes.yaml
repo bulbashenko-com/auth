@@ -1,0 +1,43 @@
+# Staging routes (patched over the base ones by name): the production paths on bulbashenko.dev, all on `websecure`
+# with TLS from staging-wildcard, reachable only from the mesh and from pods (the in-cluster e2e Job).
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: auth-public
+spec:
+  entryPoints: [websecure]
+  routes:
+    # Form submissions that carry secrets: rate-limited (Kratos has no lockout of its own).
+    - match: Host(`auth.bulbashenko.dev`) && Method(`POST`) && PathRegexp(`^/self-service/(login|recovery|verification|settings)`)
+      priority: 200
+      middlewares: [{ name: staging-access }, { name: limit-ip }, { name: limit-all }, { name: headers }]
+      services: [{ name: kratos, port: 4433 }]
+    - match: Host(`auth.bulbashenko.dev`) && Path(`/oauth2/token`)
+      priority: 200
+      middlewares: [{ name: staging-access }, { name: limit-ip }, { name: limit-all }, { name: headers }]
+      services: [{ name: hydra, port: 4444 }]
+    - match: Host(`auth.bulbashenko.dev`) && (PathPrefix(`/self-service/`) || PathPrefix(`/sessions/`) || PathPrefix(`/.well-known/ory/`))
+      priority: 100
+      middlewares: [{ name: staging-access }, { name: headers }]
+      services: [{ name: kratos, port: 4433 }]
+    - match: Host(`auth.bulbashenko.dev`) && (PathPrefix(`/oauth2/`) || Path(`/userinfo`) || Path(`/.well-known/openid-configuration`) || Path(`/.well-known/jwks.json`) || Path(`/.well-known/webfinger`))
+      priority: 100
+      middlewares: [{ name: staging-access }, { name: headers }]
+      services: [{ name: hydra, port: 4444 }]
+    - match: Host(`auth.bulbashenko.dev`)
+      priority: 10
+      middlewares: [{ name: staging-access }, { name: headers }]
+      services: [{ name: sso-ui, port: 3000 }]
+  tls: {}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: auth-admin
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`users.int.bulbashenko.dev`)
+      middlewares: [{ name: staging-access }, { name: forward-auth }, { name: headers }]
+      services: [{ name: sso-ui, port: 3000 }]
+  tls: {}

@@ -1,0 +1,15 @@
+# Staging overrides of ory/hydra/hydra.yml: the bulbashenko.dev domain.
+serve:
+  public:
+    cors:
+      allowed_origins:
+        - https://mail.int.bulbashenko.dev
+urls:
+  self:
+    issuer: https://auth.bulbashenko.dev
+    public: https://auth.bulbashenko.dev
+  login: https://auth.bulbashenko.dev/login
+  consent: https://auth.bulbashenko.dev/consent
+  logout: https://auth.bulbashenko.dev/logout
+  error: https://auth.bulbashenko.dev/error
+  post_logout_redirect: https://auth.bulbashenko.dev/login
