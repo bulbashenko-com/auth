@@ -1,0 +1,96 @@
+# Staging, as a Kustomize Component on top of this repo's base (the root kustomization.yaml): bulbashenko-com/infra
+# builds the root with `components: [deploy/staging]` into the namespace auth-staging (apps/staging/auth, pinned to
+# the same commit as production). A component, not an overlay: an overlay cannot use an ancestor directory as base. Production configs plus
+# override files on bulbashenko.dev (ory/, as the test stack does), its own OIDC clients (clients/), mailpit for
+# Kratos' mail, the e2e stand-ins (whoami), a seeded admin account and the e2e run (e2e.yaml). Design: infra#121.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - mailpit.yaml
+  - whoami.yaml
+  - extras.yaml
+  - seed-admin.yaml
+  - e2e.yaml
+configMapGenerator:
+  - name: ory-staging
+    files:
+      - kratos.yml=ory/kratos.yml
+      - hydra.yml=ory/hydra.yml
+      - oathkeeper.yml=ory/oathkeeper.yml
+      - rules.yml=ory/rules.yml
+  # Staging's clients: the site on bulbashenko.dev and the e2e test apps (not production's).
+  - name: hydra-clients
+    behavior: replace
+    files:
+      - clients/bulbashenko-site.json
+      - clients/e2e.json
+      - clients/e2e-admins.json
+      - clients/e2e-consent.json
+  - name: seed-admin
+    files:
+      - seed-admin.mjs
+patches:
+  # The production routes on bulbashenko.dev (lists are replaced whole).
+  - path: routes.yaml
+  # Forward-auth asks this namespace's Oathkeeper.
+  - target: { kind: Middleware, name: forward-auth }
+    patch: |
+      - op: replace
+        path: /spec/forwardAuth/address
+        value: http://oathkeeper.auth-staging.svc.cluster.local:4456/decisions
+  # The e2e suite signs in many times a minute from one client; same limits as the test stack (e2e/test.env).
+  - target: { kind: Middleware, name: limit-ip }
+    patch: |
+      - op: replace
+        path: /spec/rateLimit/average
+        value: 60
+  - target: { kind: Middleware, name: limit-all }
+    patch: |
+      - op: replace
+        path: /spec/rateLimit/average
+        value: 1000
+  # Ory reads the staging overrides after its production config.
+  - target: { kind: Deployment, name: kratos }
+    patch: &ory-staging |
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value: { name: staging, configMap: { name: ory-staging } }
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value: { name: staging, mountPath: /etc/config/staging }
+  - target: { kind: Deployment, name: kratos }
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: -c
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: /etc/config/staging/kratos.yml
+  - target: { kind: Deployment, name: hydra }
+    patch: *ory-staging
+  - target: { kind: Deployment, name: hydra }
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: -c
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: /etc/config/staging/hydra.yml
+  - target: { kind: Deployment, name: oathkeeper }
+    patch: *ory-staging
+  - target: { kind: Deployment, name: oathkeeper }
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: -c
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: /etc/config/staging/oathkeeper.yml
+  - target: { kind: Deployment, name: sso-ui }
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0
+        value: { name: PUBLIC_URL, value: "https://auth.bulbashenko.dev" }
+      - op: replace
+        path: /spec/template/spec/containers/0/env/1
+        value: { name: ADMIN_HOST, value: "users.int.bulbashenko.dev" }

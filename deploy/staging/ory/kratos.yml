@@ -1,0 +1,48 @@
+# Staging overrides of ory/kratos/kratos.yml (infra#121): the bulbashenko.dev domain. Mail goes to mailpit
+# (SMTP_CONNECTION_URI in the Secret the deploying repo provides).
+serve:
+  public:
+    base_url: https://auth.bulbashenko.dev/
+cookies:
+  domain: bulbashenko.dev
+selfservice:
+  default_browser_return_url: https://auth.bulbashenko.dev/
+  allowed_return_urls:
+    - https://auth.bulbashenko.dev
+    - https://users.int.bulbashenko.dev
+    - https://*.int.bulbashenko.dev
+    - https://bulbashenko.dev
+    - https://app.bulbashenko.dev
+  methods:
+    passkey:
+      config:
+        rp:
+          display_name: bulbashenko.dev
+          id: auth.bulbashenko.dev
+          origins:
+            - https://auth.bulbashenko.dev
+    password:
+      config:
+        # Same as the test stack: no calls to haveibeenpwned for throwaway test passwords.
+        haveibeenpwned_enabled: false
+    totp:
+      config:
+        issuer: bulbashenko.dev
+  flows:
+    error:
+      ui_url: https://auth.bulbashenko.dev/error
+    login:
+      ui_url: https://auth.bulbashenko.dev/login
+    registration:
+      ui_url: https://auth.bulbashenko.dev/login
+    settings:
+      ui_url: https://auth.bulbashenko.dev/settings
+    recovery:
+      ui_url: https://auth.bulbashenko.dev/recovery
+      after:
+        default_browser_return_url: https://auth.bulbashenko.dev/settings
+    verification:
+      ui_url: https://auth.bulbashenko.dev/verification
+    logout:
+      after:
+        default_browser_return_url: https://auth.bulbashenko.dev/login

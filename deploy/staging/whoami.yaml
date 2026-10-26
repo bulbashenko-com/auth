@@ -1,0 +1,41 @@
+# Stand-ins the e2e suite needs, as in the test stack: the OIDC test apps' redirect target (app.bulbashenko.dev)
+# and an admin UI behind forward-auth (garage.int.bulbashenko.dev).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: whoami }
+  template:
+    metadata:
+      labels: { app: whoami }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: whoami
+          image: traefik/whoami:v1.12.0
+          args: ["--port", "8080"]
+          ports:
+            - { name: http, containerPort: 8080 }
+          resources:
+            requests: { cpu: 5m, memory: 8Mi }
+            limits: { memory: 32Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+spec:
+  selector: { app: whoami }
+  ports:
+    - { name: http, port: 8080, targetPort: http }

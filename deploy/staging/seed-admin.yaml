@@ -1,0 +1,36 @@
+# Creates staging's admin account once (seed-admin.mjs); idempotent, so `force` may recreate it whenever its
+# script changes.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-admin
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: seed
+          image: node:24.21.0-alpine
+          command: ["node", "/scripts/seed-admin.mjs"]
+          env:
+            - { name: KRATOS_ADMIN_URL, value: "http://kratos:4434" }
+            - { name: KETO_WRITE_URL, value: "http://keto:4467" }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: scripts, mountPath: /scripts }
+      volumes:
+        - name: scripts
+          configMap: { name: seed-admin }

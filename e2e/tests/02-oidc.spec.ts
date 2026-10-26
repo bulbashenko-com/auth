@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 import { signIn, twoFactorPerson } from "./fixtures"
 import {
   APP_CALLBACK,
+  AUTH,
   authorize,
   createPerson,
   decodeJwt,
@@ -27,7 +28,7 @@ test("a mail user gets an ID token with groups and a JWT access token Stalwart c
   expect(body.refresh_token).toBeTruthy()
 
   const id = decodeJwt(body.id_token)
-  expect(id.iss).toBe("https://auth.bulbashenko.test")
+  expect(id.iss).toBe(AUTH)
   expect(id.sub).toBe(person.id)
   expect(id.preferred_username).toBe(person.username)
   expect(id.email).toBe(person.email)

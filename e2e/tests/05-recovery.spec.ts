@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { DOMAIN } from "./env"
 import { createPerson, mailedCode } from "./helpers"
 
 test("recovery by emailed code leads to settings", async ({ page }) => {
@@ -18,7 +19,7 @@ test("recovery by emailed code leads to settings", async ({ page }) => {
 
 test("recovery does not reveal whether an account exists", async ({ page }) => {
   await page.goto("/recovery")
-  await page.getByLabel("Почта").fill("nobody@bulbashenko.test")
+  await page.getByLabel("Почта").fill(`nobody@${DOMAIN}`)
   await page.getByRole("button", { name: /ОТПРАВИТЬ КОД/ }).click()
   await expect(page.getByRole("heading", { name: "Проверьте почту" })).toBeVisible()
 })
