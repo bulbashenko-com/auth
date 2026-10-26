@@ -6,6 +6,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY playwright.config.ts ./
 COPY tests ./tests
-ENV CI=1 HOME=/tmp E2E_OUTPUT_DIR=/tmp/results
+# Plain `list` output into the Job log (CI=1 would also write an HTML report into the read-only image).
+ENV HOME=/tmp E2E_OUTPUT_DIR=/tmp/results
 USER pwuser
-CMD ["npx", "playwright", "test"]
+CMD ["/e2e/node_modules/.bin/playwright", "test"]
