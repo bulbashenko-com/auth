@@ -123,8 +123,10 @@ export async function authorize(page: Page, clientId: string, scope: string, cha
   })
   await page.goto(`${AUTH}/oauth2/auth?${query}`)
   // Hydra redirects to the app (a stand-in answers there); redirects cannot be intercepted, so wait for the URL.
+  // No timeout of its own: the wait spans the caller's sign-in, TOTP window included (up to 31 s), so only the test's
+  // timeout bounds it.
   const callback = page
-    .waitForURL((url) => url.href.startsWith(APP_CALLBACK), { timeout: 45_000 })
+    .waitForURL((url) => url.href.startsWith(APP_CALLBACK), { timeout: 0 })
     .then(() => new URL(page.url()))
   return { callback }
 }
