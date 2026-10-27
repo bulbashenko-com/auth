@@ -1,0 +1,8 @@
+# The e2e run against staging, deployed by bulbashenko-com/infra as a Flux Kustomization of its own (auth-e2e) that
+# depends on the stack's (deploy/staging): the stack's health never waits for the tests, and the tests start on the
+# version they were built for. Namespace: auth-staging (Flux targetNamespace).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - rbac.yaml
+  - e2e.yaml
