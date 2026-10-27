@@ -1,6 +1,6 @@
-# The e2e suite (e2e/, image auth-e2e built from the same commit) against this staging stack, once per version:
-# `force` recreates the Job whenever its image tag changes. infra waits for it (Flux health check), so a red run
-# marks the staging deploy failed and blocks the release (infra .github/workflows/staging-gate.yml).
+# The e2e suite (e2e/, image auth-e2e built from the same commit) against the staging stack, once per version:
+# `force` recreates the Job whenever its image tag changes. Its own Flux Kustomization (infra apps/staging/auth)
+# waits for it after the stack's is ready, and its verdict gates the release (infra .github/workflows/staging-gate.yml).
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -18,14 +18,34 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         seccompProfile: { type: RuntimeDefault }
+      serviceAccountName: e2e
       initContainers:
-        # Start once the stack this version brought up answers, clients included.
+        # Test exactly this version: wait until Flux has applied the commit this image was built from (E2E_REVISION)
+        # to the stack's Kustomization and it is ready, then until the services answer, clients included.
         - name: wait
           image: ghcr.io/bulbashenko-com/auth-e2e:latest
+          env:
+            - { name: E2E_FLUX_KUSTOMIZATION, value: auth }
+            - name: NAMESPACE
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+            - { name: NODE_EXTRA_CA_CERTS, value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt }
           command:
             - node
             - -e
             - |
+              const fs = await import("node:fs")
+              const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000))
+              const token = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf8")
+              const ks = `https://kubernetes.default.svc/apis/kustomize.toolkit.fluxcd.io/v1/namespaces/${process.env.NAMESPACE}/kustomizations/${process.env.E2E_FLUX_KUSTOMIZATION}`
+              const want = process.env.E2E_REVISION
+              for (;;) {
+                const k = await (await fetch(ks, { headers: { authorization: `Bearer ${token}` } })).json()
+                const applied = k.status?.lastAppliedRevision ?? ""
+                const ready = (k.status?.conditions ?? []).some((c) => c.type === "Ready" && c.status === "True")
+                if (applied.endsWith(want) && ready) break
+                console.log(`waiting for ${want.slice(0, 7)} on Kustomization ${k.metadata?.name}: applied ${applied}, ready ${ready}`)
+                await sleep(10)
+              }
               const urls = ["http://kratos:4434/admin/health/ready", "http://hydra:4445/health/ready",
                 "http://keto:4466/health/ready", "http://sso-ui:3000/api/health", "http://hydra:4445/admin/clients/e2e"]
               const ok = async (u) => { try { return (await fetch(u)).ok } catch { return false } }
@@ -34,7 +54,7 @@ spec:
                 for (const u of urls) if (!(await ok(u))) down.push(u)
                 if (!down.length) break
                 console.log("waiting for", down.join(" "))
-                await new Promise((r) => setTimeout(r, 5000))
+                await sleep(5)
               }
           resources:
             requests: { cpu: 10m, memory: 32Mi }
