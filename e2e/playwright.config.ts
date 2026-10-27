@@ -10,7 +10,9 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   retries: 0,
-  timeout: 60_000,
+  // freshTotp waits for the next 30-second window (up to 31 s) before each code, and a test may enter two; a minute
+  // left room only for lucky timing (staging, slower than the local stack, ran out of it).
+  timeout: 120_000,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   // Writable scratch for results in the read-only staging container.
   outputDir: process.env.E2E_OUTPUT_DIR || "test-results",
