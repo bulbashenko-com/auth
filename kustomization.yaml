@@ -15,6 +15,7 @@ resources:
   - deploy/k8s/ory.yaml
   - deploy/k8s/ui.yaml
   - deploy/k8s/routes.yaml
+  - deploy/k8s/network-policy.yaml
 configMapGenerator:
   - name: kratos-config
     files:

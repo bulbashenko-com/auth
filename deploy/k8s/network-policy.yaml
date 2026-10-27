@@ -1,0 +1,44 @@
+# The admin APIs (kratos:4434, hydra:4445, keto:4466/4467) have no authentication: whoever reaches them can create
+# people, mint tokens and change groups. In compose a separate network kept other containers out; here these
+# policies do. Ingress into the namespace is denied except from its own pods and from Traefik, which only gets
+# the public ports. Kubelet probes still pass (k3s' network policy controller accepts traffic from the local node).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+# The Ory services, the UI and the Jobs talk to each other (admin APIs included): they are one stack.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-same-namespace
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {}
+---
+# Traefik (k3s' bundled DaemonSet in kube-system): the routes in routes.yaml and forward-auth for the mesh admin UIs
+# of every namespace. Public ports only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-traefik
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { app.kubernetes.io/name: traefik }
+      ports:
+        - { protocol: TCP, port: 4433 } # kratos public
+        - { protocol: TCP, port: 4444 } # hydra public
+        - { protocol: TCP, port: 4456 } # oathkeeper decisions
+        - { protocol: TCP, port: 3000 } # sso-ui
