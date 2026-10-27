@@ -47,7 +47,7 @@ Groups decide access. Each OIDC client names one group in `metadata.required_gro
 
 ## Deploy on Kubernetes
 
-`kustomization.yaml` at the root is a Kustomize base built from the same `ory/` files that `compose.yml` mounts: Deployments for Kratos, Hydra and Keto (each runs its migration as an init container), Oathkeeper and the UI, the `hydra-clients` Job, and Traefik routes (`auth-public` on the `web` entrypoint, `auth-admin` for `users.int` behind the mesh and Oathkeeper). Service names match the compose stack, so the configs' internal URLs work unchanged.
+`kustomization.yaml` at the root is a Kustomize base built from the same `ory/` files that `compose.yml` mounts: Deployments for Kratos, Hydra and Keto (each runs its migration as an init container), Oathkeeper and the UI, the `hydra-clients` Job, Traefik routes (`auth-public` on the `web` entrypoint, `auth-admin` for `users.int` behind the mesh and Oathkeeper), and NetworkPolicies that keep the admin APIs inside the namespace (see Security). Service names match the compose stack, so the configs' internal URLs work unchanged.
 
 The deploying side provides the namespace, the image tag and a Secret `auth` with `KRATOS_DSN`, `HYDRA_DSN`, `KETO_DSN`, `KRATOS_SECRETS_{COOKIE,DEFAULT,CIPHER,PAGINATION}`, `HYDRA_SECRETS_{SYSTEM,COOKIE,PAGINATION}`, `SMTP_CONNECTION_URI`, `SMTP_SENDER` and `OIDC_{SITE,HEADSCALE,FLUXWEB,GRAFANA}_CLIENT_SECRET`, plus a ConfigMap `internal-ca` (key `ca.crt`) with the CA of the Postgres server certificate, mounted at `/etc/internal-ca` so the DSNs can use `sslmode=verify-full&sslrootcert=/etc/internal-ca/ca.crt`. bulbashenko.com deploys it from [bulbashenko-com/infra](https://github.com/bulbashenko-com/infra), pinned to one commit of this repo; `.github/workflows/image.yml` builds `ghcr.io/bulbashenko-com/auth-ui:<commit>` once `test` passes on main and then opens the deploy PR `deploy/auth` in infra.
 
@@ -144,7 +144,7 @@ e2e/run.sh down
 
 ## Security
 
-- **The admin APIs of Kratos, Hydra and Keto have no authentication.** They are not routed. The stack runs on its own network ("Connect to predefined network" off), so other containers on the server, such as the website and the mail server, cannot reach them. Only `dbproxy` joins the shared network, and only to forward Postgres.
+- **The admin APIs of Kratos, Hydra and Keto have no authentication.** They are not routed. In Compose the stack runs on its own network ("Connect to predefined network" off), so other containers on the server, such as the website and the mail server, cannot reach them. Only `dbproxy` joins the shared network, and only to forward Postgres. On Kubernetes, NetworkPolicies (`deploy/k8s/network-policy.yaml`) do the same: ingress into the namespace only from its own pods, and from Traefik on the public ports (Kratos 4433, Hydra 4444, Oathkeeper 4456, UI 3000). The cluster must enforce NetworkPolicies (k3s does by default).
 - **Brute force:** Kratos has no lockout. Traefik limits secret-taking POSTs (sign-in, recovery, settings, token endpoint) per client, keyed on `CF-Connecting-IP`, and for everyone together.
 - **The UI sends a strict CSP with a per-request nonce.** It loads no third-party resources: fonts and three.js are bundled. It also blocks framing. The admin page answers only on `users.int`, and its actions check the session, the group and freshness again on every call.
 - **Credential data is encrypted at rest** (`ciphers: xchacha20-poly1305`). Anonymous usage statistics to Ory are off (`SQA_OPT_OUT`).

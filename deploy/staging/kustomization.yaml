@@ -11,6 +11,7 @@ resources:
   - extras.yaml
   - seed-admin.yaml
   - e2e.yaml
+  - network-policy.yaml
 configMapGenerator:
   - name: ory-staging
     files:
