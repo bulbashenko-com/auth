@@ -1,5 +1,6 @@
 # Every pull request (Renovate's version bumps included) runs the UI checks and the whole stack end to end.
-# Merge only when both jobs are green.
+# Merge only when both jobs are green. A push to main runs only the UI checks: it is the commit its PR already ran
+# (the ruleset wants branches up to date), and staging runs the suite again against the deploy.
 name: test
 
 on:
@@ -30,6 +31,7 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
 
   e2e:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:

@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   ui:
-    # Only commits that landed on main (not PRs from a branch named main) and passed UI checks + e2e.
+        # Only commits that landed on main (not PRs from a branch named main) whose `test` passed (UI checks; e2e ran on the PR).
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
