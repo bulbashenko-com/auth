@@ -41,6 +41,9 @@ spec:
           env:
             - { name: SQA_OPT_OUT, value: "true" }
             - { name: LOG_LEVEL, value: info }
+            # Go does not know the container limit; without this its heap grows past it between collections. Each
+            # argon2 hash takes 64 MB (kratos.yml), and routes.yaml lets at most four run at once (limit-inflight).
+            - { name: GOMEMLIMIT, value: 400MiB }
             - { name: DSN, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_DSN } } }
             - { name: SECRETS_COOKIE, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_SECRETS_COOKIE } } }
             - { name: SECRETS_DEFAULT, valueFrom: { secretKeyRef: { name: auth, key: KRATOS_SECRETS_DEFAULT } } }
@@ -57,7 +60,7 @@ spec:
             httpGet: { path: /admin/health/alive, port: admin }
           resources:
             requests: { cpu: 10m, memory: 48Mi }
-            limits: { memory: 256Mi }
+            limits: { memory: 512Mi }
           volumeMounts:
             - { name: config, mountPath: /etc/config/kratos }
             - { name: internal-ca, mountPath: /etc/internal-ca, readOnly: true }

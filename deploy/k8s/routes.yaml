@@ -11,7 +11,7 @@ spec:
     # Form submissions that carry secrets: rate-limited (Kratos has no lockout of its own).
     - match: Host(`auth.bulbashenko.com`) && Method(`POST`) && PathRegexp(`^/self-service/(login|recovery|verification|settings)`)
       priority: 200
-      middlewares: [{ name: limit-ip }, { name: limit-all }, { name: headers }]
+      middlewares: [{ name: limit-ip }, { name: limit-all }, { name: limit-inflight }, { name: headers }]
       services: [{ name: kratos, port: 4433 }]
     - match: Host(`auth.bulbashenko.com`) && Path(`/oauth2/token`)
       priority: 200
@@ -57,6 +57,18 @@ spec:
     burst: 5
     sourceCriterion:
       requestHeaderName: CF-Connecting-IP
+---
+# Password hashing (argon2, 64 MB each) at most four at a time, so a burst cannot push Kratos past its memory
+# limit (ory.yaml); the rest wait in Traefik instead of killing the pod.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: limit-inflight
+spec:
+  inFlightReq:
+    amount: 4
+    sourceCriterion:
+      requestHost: true
 ---
 # Everyone together: 120 per minute, so rotating addresses do not help either.
 apiVersion: traefik.io/v1alpha1
