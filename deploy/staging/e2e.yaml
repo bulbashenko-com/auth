@@ -53,7 +53,8 @@ spec:
             - { name: E2E_KETO_WRITE, value: "http://keto:4467" }
             - { name: E2E_MAILPIT, value: "http://mailpit:8025" }
           resources:
-            requests: { cpu: 200m, memory: 512Mi }
+            # Chromium is CPU-bound; with 200m a TOTP test took 1.7 min here against 37 s in CI.
+            requests: { cpu: "1", memory: 512Mi }
             limits: { memory: 1536Mi }
           securityContext: *hardened
           volumeMounts:
