@@ -44,12 +44,13 @@ Groups decide access. Each OIDC client names one group in `metadata.required_gro
 | `site-admins` | The bulbashenko.com admin panel |
 | `mail-users` | Mail clients and the Stalwart web UI |
 | `vpn-users` | Joining the VPN mesh (Headscale) |
+| `cloud-users` | Nextcloud (files, calendars, contacts) |
 
 ## Deploy on Kubernetes
 
 `kustomization.yaml` at the root is a Kustomize base built from the same `ory/` files that `compose.yml` mounts: Deployments for Kratos, Hydra and Keto (each runs its migration as an init container), Oathkeeper and the UI, the `hydra-clients` Job, Traefik routes (`auth-public` on the `web` entrypoint, `auth-admin` for `users.int` behind the mesh and Oathkeeper), and NetworkPolicies that keep the admin APIs inside the namespace (see Security). Service names match the compose stack, so the configs' internal URLs work unchanged.
 
-The deploying side provides the namespace, the image tag and a Secret `auth` with `KRATOS_DSN`, `HYDRA_DSN`, `KETO_DSN`, `KRATOS_SECRETS_{COOKIE,DEFAULT,CIPHER,PAGINATION}`, `HYDRA_SECRETS_{SYSTEM,COOKIE,PAGINATION}`, `SMTP_CONNECTION_URI`, `SMTP_SENDER` and `OIDC_{SITE,HEADSCALE,FLUXWEB,GRAFANA}_CLIENT_SECRET`, plus a ConfigMap `internal-ca` (key `ca.crt`) with the CA of the Postgres server certificate, mounted at `/etc/internal-ca` so the DSNs can use `sslmode=verify-full&sslrootcert=/etc/internal-ca/ca.crt`. bulbashenko.com deploys it from [bulbashenko-com/infra](https://github.com/bulbashenko-com/infra), pinned to one commit of this repo; `.github/workflows/image.yml` builds `ghcr.io/bulbashenko-com/auth-ui:<commit>` once `test` passes on main and then opens the deploy PR `deploy/auth` in infra.
+The deploying side provides the namespace, the image tag and a Secret `auth` with `KRATOS_DSN`, `HYDRA_DSN`, `KETO_DSN`, `KRATOS_SECRETS_{COOKIE,DEFAULT,CIPHER,PAGINATION}`, `HYDRA_SECRETS_{SYSTEM,COOKIE,PAGINATION}`, `SMTP_CONNECTION_URI`, `SMTP_SENDER` and `OIDC_{SITE,HEADSCALE,FLUXWEB,GRAFANA,NEXTCLOUD}_CLIENT_SECRET`, plus a ConfigMap `internal-ca` (key `ca.crt`) with the CA of the Postgres server certificate, mounted at `/etc/internal-ca` so the DSNs can use `sslmode=verify-full&sslrootcert=/etc/internal-ca/ca.crt`. bulbashenko.com deploys it from [bulbashenko-com/infra](https://github.com/bulbashenko-com/infra), pinned to one commit of this repo; `.github/workflows/image.yml` builds `ghcr.io/bulbashenko-com/auth-ui:<commit>` once `test` passes on main and then opens the deploy PR `deploy/auth` in infra.
 
 ## Deploy on Coolify
 
@@ -72,7 +73,7 @@ The deploying side provides the namespace, the image tag and a Secret `auth` wit
    | `KRATOS_CIPHER_SECRET` | exactly 32 characters: `openssl rand -hex 16` |
    | `SMTP_CONNECTION_URI` | `smtps://noreply%40example.com:<url-encoded password>@host.docker.internal:465/?server_name=mail.example.com` |
    | `SMTP_SENDER` | `noreply@example.com` |
-   | `OIDC_SITE_CLIENT_SECRET`, `OIDC_HEADSCALE_CLIENT_SECRET`, `OIDC_FLUXWEB_CLIENT_SECRET`, `OIDC_GRAFANA_CLIENT_SECRET` | `scripts/new-client-secret.sh`; the app gets the same value |
+   | `OIDC_SITE_CLIENT_SECRET`, `OIDC_HEADSCALE_CLIENT_SECRET`, `OIDC_FLUXWEB_CLIENT_SECRET`, `OIDC_GRAFANA_CLIENT_SECRET`, `OIDC_NEXTCLOUD_CLIENT_SECRET` | `scripts/new-client-secret.sh`; the app gets the same value |
 
    Optional: `AUTH_LOG_LEVEL` (`info`), `AUTH_RATE_LIMIT_PER_CLIENT` (10 per minute), `AUTH_RATE_LIMIT_TOTAL` (120 per minute).
    For another domain, change the domains in `ory/*/*.yml`, `ory/hydra/clients/` and the defaults of `AUTH_HOST`, `AUTH_PUBLIC_URL` and `AUTH_ADMIN_HOST`.
