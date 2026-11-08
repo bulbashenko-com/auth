@@ -2,7 +2,7 @@ import "server-only"
 import { permissions, relationshipsRead, relationshipsWrite } from "./ory"
 
 /** The groups that exist. Membership lives only in Keto: Group:<name>#members@User:<identity id>. */
-export const GROUPS = ["infra-admins", "site-admins", "mail-users", "vpn-users"] as const
+export const GROUPS = ["infra-admins", "site-admins", "mail-users", "vpn-users", "cloud-users"] as const
 export type Group = (typeof GROUPS)[number]
 
 export const isGroup = (value: string): value is Group => (GROUPS as readonly string[]).includes(value)
