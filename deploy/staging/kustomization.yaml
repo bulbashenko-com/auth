@@ -2,8 +2,8 @@
 # builds the root with `components: [deploy/staging]` into the namespace auth-staging (apps/staging/auth, pinned to
 # the same commit as production). A component, not an overlay: an overlay cannot use an ancestor directory as base. Production configs plus
 # override files on bulbashenko.dev (ory/, as the test stack does), its own OIDC clients (clients/), mailpit for
-# Kratos' mail, the e2e stand-ins (whoami) and a seeded admin account. The e2e run is deploy/staging-e2e, a
-# Kustomization of its own that starts after this one. Design: infra#121.
+# Kratos' mail, the e2e stand-ins (whoami) and a seeded admin account. The e2e run against it (image auth-e2e) is
+# deployed by infra (apps/staging/auth/e2e), so Flux reports its verdict on the infra dev commit. Design: infra#121.
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 resources:

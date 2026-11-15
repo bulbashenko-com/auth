@@ -1,4 +1,4 @@
-# The e2e suite as an image, for staging (deploy/staging-e2e/e2e.yaml): Playwright with Chromium, tests and config.
+# The e2e suite as an image, for staging (bulbashenko-com/infra apps/staging/auth/e2e/e2e.yaml): Playwright with Chromium, tests and config.
 # Built by .github/workflows/image.yml next to auth-ui, same tag (the commit SHA).
 FROM mcr.microsoft.com/playwright:v1.64.0-noble
 # The commit the suite was built from; the staging Job waits until Flux has deployed that commit.
