@@ -50,7 +50,7 @@ Groups decide access. Each OIDC client names one group in `metadata.required_gro
 
 `kustomization.yaml` at the root is a Kustomize base built from the same `ory/` files that `compose.yml` mounts: Deployments for Kratos, Hydra and Keto (each runs its migration as an init container), Oathkeeper and the UI, the `hydra-clients` Job, Traefik routes (`auth-public` on the `web` entrypoint, `auth-admin` for `users.int` behind the mesh and Oathkeeper), and NetworkPolicies that keep the admin APIs inside the namespace (see Security). Service names match the compose stack, so the configs' internal URLs work unchanged.
 
-The deploying side provides the namespace, the image tag and a Secret `auth` with `KRATOS_DSN`, `HYDRA_DSN`, `KETO_DSN`, `KRATOS_SECRETS_{COOKIE,DEFAULT,CIPHER,PAGINATION}`, `HYDRA_SECRETS_{SYSTEM,COOKIE,PAGINATION}`, `SMTP_CONNECTION_URI`, `SMTP_SENDER` and `OIDC_{SITE,HEADSCALE,FLUXWEB,GRAFANA,NEXTCLOUD}_CLIENT_SECRET`, plus a ConfigMap `internal-ca` (key `ca.crt`) with the CA of the Postgres server certificate, mounted at `/etc/internal-ca` so the DSNs can use `sslmode=verify-full&sslrootcert=/etc/internal-ca/ca.crt`. bulbashenko.com deploys it from [bulbashenko-com/infra](https://github.com/bulbashenko-com/infra), pinned to one commit of this repo; `.github/workflows/image.yml` builds `ghcr.io/bulbashenko-com/auth-ui:<commit>` once `test` passes on main and then opens the deploy PR `deploy/auth` in infra.
+The deploying side provides the namespace, the image tag and a Secret `auth` with `KRATOS_DSN`, `HYDRA_DSN`, `KETO_DSN`, `KRATOS_SECRETS_{COOKIE,DEFAULT,CIPHER,PAGINATION}`, `HYDRA_SECRETS_{SYSTEM,COOKIE,PAGINATION}`, `SMTP_CONNECTION_URI`, `SMTP_SENDER` and `OIDC_{SITE,HEADSCALE,FLUXWEB,GRAFANA,NEXTCLOUD}_CLIENT_SECRET`, plus a ConfigMap `internal-ca` (key `ca.crt`) with the CA of the Postgres server certificate, mounted at `/etc/internal-ca` so the DSNs can use `sslmode=verify-full&sslrootcert=/etc/internal-ca/ca.crt`. bulbashenko.com deploys it from [bulbashenko-com/infra](https://github.com/bulbashenko-com/infra), pinned to one commit of this repo; `.github/workflows/image.yml` builds `ghcr.io/bulbashenko-com/auth-ui:<commit>` and `auth-e2e:<commit>` once `test` passes on main, and infra pins that commit on its `dev` branch: staging (`auth.bulbashenko.dev`) runs it within minutes and runs the e2e suite against it again; production gets it with the next release. The whole flow: [infra docs/workflow.md](https://github.com/bulbashenko-com/infra/blob/dev/docs/workflow.md).
 
 ## Deploy on Coolify
 
@@ -131,7 +131,7 @@ Renovate opens pull requests for the Ory images (all four together), npm package
 - the admin page;
 - rate limits.
 
-Merge when it is green, then redeploy.
+The policy is shared by all repos (infra `renovate-preset.json`): security fixes and non-major updates merge themselves when `test` is green and reach staging; majors wait in one PR. Production gets them with the release ([infra docs/workflow.md](https://github.com/bulbashenko-com/infra/blob/dev/docs/workflow.md)).
 
 Ory's open-source releases come one or two times a year, without backports; security fixes reach the paid OEL builds first. Watch the security advisories of ory/kratos, ory/hydra, ory/keto and ory/oathkeeper and upgrade as soon as an OSS release appears.
 
